@@ -6,7 +6,8 @@ This repository brings several existing sources into a linear history and is the
 
 * code recovered from the original authors, Andres Huertas and Yang Cheng, used for the Mars Phoenix Lander mission
 * code handed off by Andres at his retirement (used for the MSL and InSight missions)
-* code used for the Mars 2020 mission.
+* code used for the Mars 2020 mission
+* the RockCollect user interface built by Bob Crocco.
 
 ## Contributors and Stakeholders
 
