@@ -330,10 +330,10 @@ int read_pgm_image(char* infilename, unsigned char** image, int* rows, int* cols
 * Function: write_pgm_image
 * Writes an image in PGM format. The file is either
 * written to the file specified by outfilename or to standard output if
-* outfilename = NULL. A comment can be written to the header if comment != NULL.
+* outfilename = NULL.
 ******************************************************************************/
 int write_pgm_image(char* outfilename, unsigned char* image, int rows,
-                    int cols, char* comment, int maxval)
+                    int cols, int maxval)
 {
     FILE* fp;
     //// Open the output image file for writing if a filename was given. If no
@@ -388,10 +388,10 @@ int write_pgm_image(char* outfilename, unsigned char* image, int rows,
 * Function: write_ppm_image
 * Writes an image in 3 channel color PPM format. The file is either
 * written to the file specified by outfilename or to standard output if
-* outfilename = NULL. A comment can be written to the header if comment != NULL.
+* outfilename = NULL.
 ******************************************************************************/
 int write_ppm_image(char* outfilename, unsigned char* image, int rows,
-                    int cols, char* comment)
+                    int cols)
 {
     FILE* fp;
     //// Open the output image file for writing if a filename was given. If no

@@ -910,7 +910,7 @@ int gamma_from_files(char* inputImagePath, float gamma, char* outputGammaPath)
 
     const int bitsPerPixel = 8;
     const int maxValue = (1 << bitsPerPixel) - 1;
-    if (0 == write_pgm_image(outputGammaPath, GammaImg, frows, fcols, "", maxValue))
+    if (0 == write_pgm_image(outputGammaPath, GammaImg, frows, fcols, maxValue))
     {
         printf("failed to write output image");
         free(SceneImg);
@@ -954,7 +954,7 @@ int threshold_from_files(char* inputImagePath, float gamma, int thresholdOverrid
       
     const int bitsPerPixel = 8;
     const int maxValue = (1 << bitsPerPixel) - 1;
-    if (0 == write_pgm_image(outputShadowPath, ShaImg, frows, fcols, "", maxValue))
+    if (0 == write_pgm_image(outputShadowPath, ShaImg, frows, fcols, maxValue))
     {
         printf("failed to write output image");
         free(SceneImg);
@@ -1037,7 +1037,7 @@ int shadows_from_files(char* inputThresholdImagePath, char* outputShadowsImagePa
 
     const int bitsPerPixel = 16;
     const int maxValue = (1 << bitsPerPixel) - 1;
-    if (0 == write_pgm_image(outputShadowsImagePath, (unsigned char*)labelImg, frows, fcols, "", maxValue))
+    if (0 == write_pgm_image(outputShadowsImagePath, (unsigned char*)labelImg, frows, fcols, maxValue))
     {
         printf("failed to write output image");
         free(threshImg);

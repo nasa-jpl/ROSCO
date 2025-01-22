@@ -64,7 +64,7 @@ Then run the following commands to generate the Visual Studio solution file:
   cmake .. -G "Visual Studio 16 2019"
 ``` 
 
-Then open the newly created `build/Rockdetector.sln` in Visual Studio.  In the "Solution Configurations" pulldown in the toolbar make sure "Release" is chosen.  In the adjacent "Solution Platforms" pulldown make sure "x64" is chosen.  Then in the Solution Explorer pane right click on "Solution 'RockDetector'" and chose "Build Solution".  The command line executable will be generated at `RockDetector/build/bin/Release/RockDetector.exe` and the shared library will be at `RockDetector/build/Release/RockDetectorShared.dll`.
+Then open the newly created `RockDetector/build/Rockdetector.sln` in Visual Studio.  In the "Solution Configurations" pulldown in the toolbar make sure "Release" is chosen.  In the adjacent "Solution Platforms" pulldown make sure "x64" is chosen.  Then in the Solution Explorer pane right click on "Solution 'RockDetector'" and chose "Build Solution".  The command line executable will be generated at `RockDetector/build/bin/Release/RockDetector.exe` and the shared library will be at `RockDetector/build/Release/RockDetectorShared.dll`.
 
 ## RockCollect User Interface
 
