@@ -41,7 +41,7 @@ int main(int argc, char *argv[])
 
     if(argc != 2)
     {
-        printf("Error.\n Should be: RunTests <path to test directory>");
+        printf("Error.\n Should be: RunTests <path to test directory>\n");
         return 1;
     }
     char* testDir = argv[1];
