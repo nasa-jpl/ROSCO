@@ -19,9 +19,52 @@ This repository brings several existing sources into a linear history and is the
 * [Bob Crocco](https://www.linkedin.com/in/bob-crocco-47a140) - software developer at NASA/JPL, primary author of the RockCollect user interface
 * [Marsette Vona](https://www2.ccs.neu.edu/research/gpc/vona.html) - software developer at NASA/JPL
 
-## RockDetect Command Line Tool
+## RockDetector Command Line Tool and Library
 
-TODO
+The core rock detection algorithms are implemented in a C++ codebase in the [RockDetector](./RockDetector) subdirectory.  This code builds on Linux, Mac OS X, and Windows.  It creates both a command-line executable and a library.
+
+There are two dependencies:
+
+* [OpenMP](https://www.openmp.org) enables parallelization for a big performance improvement
+* [SWIG](https://www.swig.org) enables a Python interface to the library.
+
+Both are optional, and will be used only if you install them on your system before building RockDetector.
+
+Test instructions are [here](RockDetector/test/README.md).
+
+### Building on Linux and Mac OS X
+
+Install [cmake](https://cmake.org).
+
+```
+  cd RockDetector
+  mkdir build
+  cd build
+  cmake .. 
+  make
+``` 
+
+The command line executable will be generated at `RockDetector/build/bin/RockDetector` and the shared library will be at `RockDetector/build/lib/libRockDetectorShared.*`.
+
+### Building on Windows
+
+Install the latest version of cmake from [here](https://cmake.org/download).  These instructions were tested with cmake-3.28.3 on windows x86_64.
+
+Install [Microsoft Visual Studio Community Edition](https://visualstudio.microsoft.com/vs/community).  These instructions were tested with
+
+* [Visual Studio 16 2019](https://visualstudio.microsoft.com/vs/older-downloads), which is also the version currently used by the [RockCollect](#rockcollect-user-interface) UI.
+* a [git bash](https://www.atlassian.com/git/tutorials/git-bash) command prompt, but the built-in cmd or [cygwin](https://cygwin.com) should also work.
+
+Then run the following commands to generate the Visual Studio solution file:
+
+```
+  cd RockDetector
+  mkdir build
+  cd build
+  cmake .. -G "Visual Studio 16 2019"
+``` 
+
+Then open the newly created `build/Rockdetector.sln` in Visual Studio.  In the "Solution Configurations" pulldown in the toolbar make sure "Release" is chosen.  In the adjacent "Solution Platforms" pulldown make sure "x64" is chosen.  Then in the Solution Explorer pane right click on "Solution 'RockDetector'" and chose "Build Solution".  The command line executable will be generated at `RockDetector/build/bin/Release/RockDetector.exe` and the shared library will be at `RockDetector/build/Release/RockDetectorShared.dll`.
 
 ## RockCollect User Interface
 

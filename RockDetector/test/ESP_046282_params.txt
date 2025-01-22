@@ -1,0 +1,22 @@
+rd_gamma                        1.200000
+rd_ground_resolution            0.273000
+rd_sun_incidence_angle          49.995998
+rd_sun_azimuth_angle            350.897003
+rd_min_shadow_size              3
+rd_max_shadow_size              800
+rd_mean_gradient_threshold      20.00
+rd_confidence_threshold         0.70
+rd_min_split_shadow_size        100
+rd_spliting_ratio               0.5
+#rd_min_hazard_size              1.0
+rd_rock_elongate_ratio          4.0
+rd_save_image_rock_pairs        0
+rd_save_rock_map                0
+rd_save_subset_images           0
+rd_test                         0
+#rd_brightness_correction        0
+rd_gamma_threshold_override     0
+rd_hazard_threshold             0
+rd_rockmapfile                  unused
+rd_window_test_flag             0
+rd_window_test_range            0 0 0 0
