@@ -32,7 +32,7 @@ Both are optional, and will be used only if you install them on your system befo
 
 Test instructions are [here](RockDetector/test/README.md).
 
-### Building on Linux and Mac OS X
+### Building RockDetector on Linux and Mac OS X
 
 Install [cmake](https://cmake.org).
 
@@ -46,7 +46,7 @@ Install [cmake](https://cmake.org).
 
 The command line executable will be generated at `RockDetector/build/bin/RockDetector` and the shared library will be at `RockDetector/build/lib/libRockDetectorShared.*`.
 
-### Building on Windows
+### Building RockDetector on Windows
 
 Install the latest version of cmake from [here](https://cmake.org/download).  These instructions were tested with cmake-3.28.3 on windows x86_64.
 
