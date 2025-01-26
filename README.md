@@ -7,7 +7,7 @@ This repository brings several existing sources into a linear history and is the
 * code recovered from the original authors, Andres Huertas and Yang Cheng, used for the Mars Phoenix Lander mission
 * code handed off by Andres at his retirement (used for the MSL and InSight missions)
 * code used for the Mars 2020 mission
-* the RockCollect user interface built by Bob Crocco.
+* the [RockCollect](#rockcollect-user-interface) user interface.
 
 ## Contributors and Stakeholders
 
@@ -68,7 +68,29 @@ Then open the newly created `RockDetector/build/Rockdetector.sln` in Visual Stud
 
 ## RockCollect User Interface
 
-TODO
+RockCollect is a graphical user interface for the [RockDetector](#rockdetector-command-line-tool-and-library) library.  It is also a testbed designed to measure users' speed and quality in tuning rock detection against proposed user interfaces and software assists.  RockCollect was originally developed by Bob Crocco.
+
+RockCollect is built using [Windows Forms](https://en.wikipedia.org/wiki/Windows_Forms) and only compiles and runs on Windows platforms.
+
+## Typical Settings
+* ground sampling distance = 0.3
+* sun incidence angle = 45
+* sub-solar azimuth angle = 133
+
+# Building RockCollect (Windows Only)
+
+Install Microsoft [Visual Studio Community Edition 16 2019](https://visualstudio.microsoft.com/vs/older-downloads).
+
+First build [RockDetector](#rockdetector-command-line-tool-and-library), following the instructions above, using Visual Studio 16 2019.
+
+Then open `RockCollect/Source/RockCollect.sln` in Visual Studio 16 2019.  In the "Solution Configurations" pulldown in the toolbar make sure "Release" is chosen.  In the adjacent "Solution Platforms" pulldown make sure "x64" is chosen.  In the Solution Explorer pane right click on "Solution 'RockCollect'" and chose "Build Solution".
+
+Open a command prompt and then run the following commands to copy the RockDetector shared library and then launch the RockCollect UI:
+```
+cd RockCollect
+cp ../RockDetector/build/Release/RockDetectorShared.dll bin/Release/
+./bin/Release/RockCollect.exe
+```
 
 ## References
 
