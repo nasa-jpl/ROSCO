@@ -44,6 +44,7 @@
             this.labelStatusRocklist = new System.Windows.Forms.Label();
             this.buttonShapeFile = new System.Windows.Forms.Button();
             this.labelShapeFile = new System.Windows.Forms.Label();
+            this.ROSCO_TITLE = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.numericGSD)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericIncidence)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericAzimuth)).BeginInit();
@@ -240,10 +241,22 @@
             this.labelShapeFile.Text = "Shape File Selected:";
             this.labelShapeFile.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
+            // ROSCO_TITLE
+            // 
+            this.ROSCO_TITLE.Font = new System.Drawing.Font("Microsoft Sans Serif", 20.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.ROSCO_TITLE.Location = new System.Drawing.Point(25, 40);
+            this.ROSCO_TITLE.Name = "ROSCO_TITLE";
+            this.ROSCO_TITLE.Size = new System.Drawing.Size(800, 60);
+            this.ROSCO_TITLE.TabIndex = 16;
+            this.ROSCO_TITLE.Text = "ROck Shadow COunter (ROSCO) RockCollect User Interface\r\nVersion 20250930";
+            this.ROSCO_TITLE.TextAlign = System.Drawing.ContentAlignment.TopCenter;
+            this.ROSCO_TITLE.Click += new System.EventHandler(this.ROSCO_TITLE_Click);
+            // 
             // ChooseImageUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.ROSCO_TITLE);
             this.Controls.Add(this.labelShapeFile);
             this.Controls.Add(this.buttonShapeFile);
             this.Controls.Add(this.labelStatusRocklist);
@@ -291,5 +304,6 @@
         private System.Windows.Forms.Label labelStatusRocklist;
         private System.Windows.Forms.Button buttonShapeFile;
         private System.Windows.Forms.Label labelShapeFile;
+        private System.Windows.Forms.Label ROSCO_TITLE;
     }
 }

@@ -104,5 +104,10 @@ namespace RockCollect.Stages
         private void ChooseImageUI_Load(object sender, EventArgs e)
         {
         }
+
+        private void ROSCO_TITLE_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
