@@ -72,6 +72,7 @@ namespace RockCollect
                 {
                     Directory.CreateDirectory(CurImageDirectory);
                 }
+                Console.WriteLine("saving per-tile settings and results at \"{0}\"", CurImageDirectory);
             }
 
             Stage nextStage = null;

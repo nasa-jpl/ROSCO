@@ -133,7 +133,9 @@ namespace RockCollect.Stages
                 return false;
 
             results = new RockDetector.DetectionResults("Shadows", TileImage.Width, TileImage.Height);
-                                  
+
+            Console.WriteLine("running rock detector on tile to refine shadows");
+
             int numOutRocks = 0;
             RockDetector.INSETTINGS inSettings = RockDetector.CreateInSettings(settings);
             byte[] detectImage = new byte[TileImage.Width * TileImage.Height];

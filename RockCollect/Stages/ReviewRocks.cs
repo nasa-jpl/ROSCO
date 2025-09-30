@@ -364,6 +364,7 @@ namespace RockCollect.Stages
 
             results = new RockDetector.DetectionResults("Yours", TileImage.Width, TileImage.Height);
 
+            Console.WriteLine("running rock detector on tile to review rock detections");
 
             int numOutRocks = 0;
             RockDetector.INSETTINGS inSettings = RockDetector.CreateInSettings(settings);
@@ -500,6 +501,9 @@ namespace RockCollect.Stages
                 InputToOutput("TILES_VERTICAL");
                 InputToOutput("COMPARISON_ROCKLIST");
 
+                Console.WriteLine(string.Format("saving detection settings for tile to \"{0}\" and \"{1}\"",
+                                                outJSONPath, outParamsPath));
+
                 if (!WriteOutputJSON())
                     return false;
 
@@ -508,6 +512,9 @@ namespace RockCollect.Stages
                 {
                     return false;
                 }
+
+                Console.WriteLine(string.Format("running rock detector on tile, saving rock list to \"{0}\"",
+                                                outRocksListPath));
 
                 if(0 == RockDetector.detect_from_files(TilePath, outParamsPath, outRocksListPath))
                 {

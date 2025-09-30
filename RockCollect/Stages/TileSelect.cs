@@ -220,6 +220,9 @@ namespace RockCollect.Stages
 
         internal void SaveRocklist(string fileName)
         {
+            Console.WriteLine(string.Format("running rock detector on all runnable tiles, " +
+                                            "saving resulting rocklist to \"{0}\"", fileName));
+
             int numTiles = TilesVertical * TilesHorizontal;
             var inSettings = new RockDetector.INSETTINGS[numTiles];
             var loaded = new bool[numTiles];
@@ -227,7 +230,8 @@ namespace RockCollect.Stages
             var tsd = TileShapeData;
             var writeJSONOpts = new JsonSerializerOptions { WriteIndented = true };
 
-            Console.WriteLine("loading settings for already-tuned tiles from " + GetDirectory(Dir.FinalOutput));
+            Console.WriteLine(string.Format("loading settings for already-tuned tiles from \"{0}\"",
+                                            GetDirectory(Dir.FinalOutput)));
             int numLoaded = 0;
             for (int y = 0; y < TilesVertical; y++)
             {
@@ -294,6 +298,7 @@ namespace RockCollect.Stages
                 }
             }
 
+            int nc = 0, nf = 0;
             for (int y = 0; y < TilesVertical; y++)
             {
                 for (int x = 0; x < TilesHorizontal; x++)
@@ -313,8 +318,8 @@ namespace RockCollect.Stages
                         int maxRadius = Math.Max(x, y);
                         maxRadius = Math.Max(maxRadius, TilesHorizontal - x - 1);
                         maxRadius = Math.Max(maxRadius, TilesVertical - y - 1);
-                        Console.WriteLine(string.Format("searching for tuned neighbor of tile at col {0}, row {1}, " +
-                                                        "max radius {2}{3}", x, y, maxRadius, grpMsg));
+//                        Console.WriteLine(string.Format("searching for tuned neighbor of tile at col {0}, row {1}, " +
+//                                                        "max radius {2}{3}", x, y, maxRadius, grpMsg));
                         int ni = -1;
                         for (int radius = 1; radius <= maxRadius && ni < 0; radius++)
                         {
@@ -346,8 +351,8 @@ namespace RockCollect.Stages
                         if (ni >= 0)
                         {
                             GetTileAddress(ni, out int nx, out int ny);
-                            Console.WriteLine(string.Format("copying settings for tuned tile at col {0}, row {1} " +
-                                                            "for tile at col {2}, row {3}{4}", nx, ny, x, y, grpMsg));
+//                            Console.WriteLine(string.Format("copying settings for tuned tile at col {0}, row {1} " +
+//                                                            "for tile at col {2}, row {3}{4}", nx, ny, x, y, grpMsg));
                             inSettings[idx] = inSettings[ni];
                             string srcName = ReviewRocks.GetTileOutputName(ni, TilesHorizontal) + ".json";
                             string srcJSON = Path.Combine(GetDirectory(Dir.FinalOutput), srcName);
@@ -362,28 +367,38 @@ namespace RockCollect.Stages
                             string dstName = ReviewRocks.GetTileOutputName(idx, TilesHorizontal) + ".json";
                             string dstJSON = Path.Combine(dir, dstName);
                             File.WriteAllText(dstJSON, JsonSerializer.Serialize(data, data.GetType(), writeJSONOpts));
+                            nc++;
                         }
                         else
                         {
                             //MaxShadowArea = 0 will cause RockDetector.detect_per_tile_settings() to ignore the tile
                             Console.WriteLine(string.Format("failed to find tuned tile from which to copy settings " +
                                                             "for tile at col {0}, row {1}{2}", x, y, grpMsg));
+                            nf++;
                         }
                     }
                 }
             }
 
-            //MaxShadowArea = 0 will cause RockDetector.detect_per_tile_settings() to ignore the tile
-            if (tsd != null) {
-                for (int y = 0; y < TilesVertical; y++)
+            Console.WriteLine(string.Format("copied settings for {0} un-tuned tiles from nearest tuned neighbor{1}",
+                                            nc, tsd != null ? " in same shape file group" : ""));
+            Console.WriteLine(string.Format("failed to copy settings for {0} un-tuned tiles from any tuned neighbor{1}",
+                                            nf, tsd != null ? " in same shape file group" : ""));
+
+            int nr = 0;
+            for (int y = 0; y < TilesVertical; y++)
+            {
+                for (int x = 0; x < TilesHorizontal; x++)
                 {
-                    for (int x = 0; x < TilesHorizontal; x++)
-                    {
-                        int idx = GetTileIndex(x, y);
-                        if (tsd[idx] == null || !tsd[idx].run) inSettings[idx].MaxShadowArea = 0;
-                    }
+                    int idx = GetTileIndex(x, y);
+                    //MaxShadowArea = 0 will cause RockDetector.detect_per_tile_settings() to ignore the tile
+                    if (tsd != null && (tsd[idx] == null || !tsd[idx].run)) inSettings[idx].MaxShadowArea = 0;
+                    else if (inSettings[idx].MaxShadowArea > 0) nr++;
                 }
             }
+
+            Console.WriteLine(string.Format("running rock detector on {0} runnable of {1} total tiles, " +
+                                            "saving resulting rocklist to \"{2}\"", nr, numTiles, fileName));
 
             RockDetector.detect_per_tile_settings(ImagePath, fileName, numTiles, inSettings);
             //TODO: warn

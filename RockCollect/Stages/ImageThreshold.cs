@@ -137,6 +137,9 @@ namespace RockCollect.Stages
                 // shadow blob
                 string shadowBlobPath = Path.Combine(GetDirectory(Dir.Output), "shadowBlobs.ppm");
                 int numShadows = 0;
+
+                Console.WriteLine("running rock detector on tile to make shadow blob image");
+
                 if(0 == RockDetector.shadows_from_files(shadowPath, shadowBlobPath, ref numShadows)) //BUGBUG: pre-splitting ids...wont match
                 {
                     throw new Exception("Failed to generate shadow blob image");
@@ -190,6 +193,10 @@ namespace RockCollect.Stages
                 GammaThresholdOverride = RockDetector.DISABLE_GAMMA_THRESH_OVERRIDE
             };
 
+            Console.WriteLine(string.Format("running rock detector on tile {0} times with gamma {1} to {2} " +
+                                            "to compute shadow blob pixels by gamma",
+                                            steps, MIN_GAMMA, MAX_GAMMA));
+
             for (int idxStep = 0; idxStep < steps; idxStep++)
             {
                 settings.Gamma = MIN_GAMMA + idxStep * stepSize;
@@ -223,10 +230,15 @@ namespace RockCollect.Stages
 
             float range = MAX_GAMMA - MIN_GAMMA;
             int steps = (int)Math.Ceiling(range / stepSize);
+
+            Console.WriteLine(string.Format("running rock detector on tile {0} times with gamma {1} to {2} " +
+                                            "to compute shadow pixels by gamma",
+                                            steps, MIN_GAMMA, MAX_GAMMA));
+
             for (int idxStep = 1; idxStep < steps; idxStep++) //gamma 0 is too many pixels
             {
                 float gamma = MIN_GAMMA + idxStep * stepSize;
-                var tmpImage = CreateShadowImage(TilePath, shadowPath, gamma, 0, out int thresholdInGamma);
+                var tmpImage = CreateShadowImage(TilePath, shadowPath, gamma, 0, out int thresholdInGamma, true);
                 int shadowPixels = 0;
                 for (int idxPixel = 0; idxPixel < tmpImage.Width * tmpImage.Height; idxPixel++)
                 {
@@ -321,6 +333,8 @@ namespace RockCollect.Stages
                 File.Delete(gammaPath);
             }
 
+            Console.WriteLine("running rock detector on tile to make gamma image");
+
             if( 0 == RockDetector.gamma_from_files(tilePath, Gamma, gammaPath))
             {
                 throw new Exception("failed to make gamma image");
@@ -341,7 +355,7 @@ namespace RockCollect.Stages
             return gammaImage;
         }
 
-        private Image CreateShadowImage(string tilePath, string shadowPath, float gamma, int thresholdOverride, out int thresholdInGamma)
+        private Image CreateShadowImage(string tilePath, string shadowPath, float gamma, int thresholdOverride, out int thresholdInGamma, bool quiet = false)
         {
             if (!File.Exists(tilePath))
             {
@@ -351,6 +365,11 @@ namespace RockCollect.Stages
             if (File.Exists(shadowPath))
             {
                 File.Delete(shadowPath);
+            }
+
+            if (!quiet)
+            {
+                Console.WriteLine("running rock detector on tile to make shadow image");
             }
 
             thresholdInGamma = 0;
