@@ -1,1 +1,8 @@
 build/
+bin/
+obj/
+packages/
+.vs/
+
+ImageOutput/
+Sessions/
