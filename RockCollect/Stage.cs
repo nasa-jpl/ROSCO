@@ -26,6 +26,7 @@ namespace RockCollect
         private string FinalOutputDir;
         private Panel WorkArea;
         private Form StatusForm;
+        private Workflow parentWorkflow;
         protected Logger Log;
         public StageData inData;
         public StageData outData;
@@ -35,15 +36,15 @@ namespace RockCollect
 
         public enum Dir { Stage, Input, Output, Debug, FinalOutput};
         
-        public virtual void Init(Logger log,  string stageDirectory, string finalOutputDirectory)
+        public virtual void Init(Logger log,  string stageDirectory, string finalOutputDirectory, Workflow workflow)
         {
             Log = log;
             StageDir = stageDirectory;
             FinalOutputDir = finalOutputDirectory;
             inData = new StageData();
             outData = new StageData();
+            parentWorkflow = workflow;
                
-
             EnsureDirectories();
         }
 
@@ -78,6 +79,28 @@ namespace RockCollect
             return false;
         }
 
+        public void SetFinalOutputDirectory(string dir)
+        {
+            FinalOutputDir = dir;
+        }
+
+        public string GetFinalOutputDirectory(string imagePath)
+        {
+            if (!string.IsNullOrEmpty(imagePath))
+            {
+                return Path.Combine(FinalOutputDir, Path.GetFileNameWithoutExtension(imagePath));
+            }
+            else
+            {
+                return FinalOutputDir;
+            }
+        }
+
+        public virtual string GetFinalOutputDirectory()
+        {
+            return GetFinalOutputDirectory(inData.Data.ContainsKey("IMAGE_PATH") ? inData.Data["IMAGE_PATH"] : null);
+        }
+
         public string GetDirectory(Dir dir)
         {
             switch (dir)
@@ -91,14 +114,7 @@ namespace RockCollect
                 case Dir.Debug:
                     return Path.Combine(StageDir, "Logs");
                 case Dir.FinalOutput:
-                    if(inData.Data.ContainsKey("IMAGE_PATH"))
-                    {
-                        return Path.Combine(FinalOutputDir, Path.GetFileNameWithoutExtension(inData.Data["IMAGE_PATH"]));
-                    }
-                    else
-                    {
-                        return FinalOutputDir;
-                    }
+                    return GetFinalOutputDirectory();
                 default:
                     throw new Exception("Unknown directory type");
             }
@@ -132,10 +148,16 @@ namespace RockCollect
         
         public virtual bool Deactivate(bool forward)
         {
-            if (false == SaveOutput())
+            if (!SaveOutput())
+            {
                 return false;
-            if (false == TeardownUI())
+            }
+
+            if (!TeardownUI())
+            {
                 return false;
+            }
+
             return true;
         }
 

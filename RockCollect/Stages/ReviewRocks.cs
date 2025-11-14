@@ -27,9 +27,9 @@ namespace RockCollect.Stages
         int NumTilesHorizontal;
         int NumTilesVertical;
 
-        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory)
+        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory, Workflow workflow)
         {
-            base.Init(log, stageDirectory, finalOutputDirectory);
+            base.Init(log, stageDirectory, finalOutputDirectory, workflow);
 
             settings = new RockDetector.Settings();
             settings.Confidence = RockDetector.DEFAULT_CONFIDENCE;

@@ -26,6 +26,11 @@ namespace RockCollect.Stages
             return new ChooseImageUI(this);
         }
 
+        public override string GetFinalOutputDirectory()
+        {
+            return GetFinalOutputDirectory(outData.Data.ContainsKey("IMAGE_PATH") ? outData.Data["IMAGE_PATH"] : null);
+        }
+
         public void SetNewImage(string path)
         {
             ImagePath = path;

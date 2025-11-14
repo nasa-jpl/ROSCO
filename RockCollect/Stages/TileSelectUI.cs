@@ -20,13 +20,15 @@ namespace RockCollect.Stages
             InitializeComponent();
             Stage = stage;
             stage.OnTeardownUI = () => {
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxTile.Image.Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
             };
+            textBoxStorageFolder.Text = stage.GetFinalOutputDirectory();
         }
 
         private void RefreshInitialUI()
@@ -38,16 +40,18 @@ namespace RockCollect.Stages
 
             int horizTiles = Stage.GetNumTilesHorizontal();
             int vertTiles = Stage.GetNumTilesVertical();
-            this.labelTotalTilesVal.Text = string.Format("{0} ({1} x {2})", horizTiles * vertTiles, horizTiles, vertTiles);
+            this.labelTotalTilesVal.Text = string.Format("{0} ({1} x {2})",
+                                                         horizTiles * vertTiles, horizTiles, vertTiles);
 
             this.labelRemainingVal.Text = Stage.GetRemainingTilesToTune().ToString();
 
-            this.labelTilesToVisitVal.Text = Stage.GetTilesToVisit().ToString();
+            this.labelSkippedTiles.Text = Stage.GetSkippedTiles().ToString();
+
+            this.labelTunedTiles.Text = Stage.CountTunedTiles().ToString();
 
             this.labelGroupVal.Text = "";
 
             this.labelRunnableTiles.Text = Stage.CountRunnableTiles().ToString();
-            this.labelTunedTiles.Text = Stage.CountTunedTiles().ToString();
         }
 
         private void RefreshSelectedUI()
@@ -57,10 +61,11 @@ namespace RockCollect.Stages
             {
                 this.labelSelectedTileVal.Text = string.Format("{0}, {1}", tileCol, tileRow);
 
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
-                    ((IDisposable)this.pictureBoxTile.Image).Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
 
                 Bitmap activeTileBmp = Stage.GetActiveTileBitmap();                                
@@ -69,16 +74,21 @@ namespace RockCollect.Stages
                 Stage.GetActiveTileResolution(out int widthPixels, out int heightPixels);
                 this.labelSelectedTilePixelsVal.Text = string.Format("{0} x {1}", widthPixels, heightPixels);
 
+                this.labelRemainingVal.Text = Stage.GetRemainingTilesToTune().ToString();
+                
+                this.labelSkippedTiles.Text = Stage.GetSkippedTiles().ToString();
+
                 this.labelGroupVal.Text = Stage.GetActiveTileGroup();
             }
             else
             {
                 this.labelSelectedTileVal.Text = "";
 
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
-                    ((IDisposable)this.pictureBoxTile.Image).Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
 
                 this.labelSelectedTilePixelsVal.Text = "";
@@ -93,9 +103,9 @@ namespace RockCollect.Stages
             RefreshSelectedUI();
         }
 
-        private void buttonChooseTile_Click(object sender, EventArgs e)
+        private void buttonAutoChooseTile_Click(object sender, EventArgs e)
         {
-            Stage.ChooseTile();
+            Stage.AutoChooseTile();
             RefreshSelectedUI();
         }
 

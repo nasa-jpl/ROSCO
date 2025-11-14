@@ -50,9 +50,9 @@ namespace RockCollect.Stages
             return new ImageThresholdStatusUI(mainUI);
         }
 
-        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory)
+        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory, Workflow workflow)
         {
-            base.Init(log, stageDirectory, finalOutputDirectory);
+            base.Init(log, stageDirectory, finalOutputDirectory, workflow);
 
             Gamma = DEFAULT_GAMMA;
             ThresholdOverride = DEFAULT_THRESHOLDOVERRIDE;

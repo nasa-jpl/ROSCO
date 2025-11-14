@@ -15,7 +15,6 @@ namespace RockCollect.Stages
         public const int TILESIZE = 500;
         public const int TILEOVERLAP = 50;
 
-        protected List<int> tunedTiles;
         protected List<int> remainingTilesToTune;
         protected List<int> skippedTiles;
 
@@ -29,7 +28,6 @@ namespace RockCollect.Stages
         int ActiveTile = -1;
         Image ActiveImage;
         int Skips;
-        int TilesToVisit;
 
         class ShapeData
         {
@@ -52,7 +50,7 @@ namespace RockCollect.Stages
 
         public void SetSkips(int skips)
         {
-            Skips = skips;
+            Skips = skips >= 0 ? skips : 0;
         }
 
         public override bool LoadInput(string directory)
@@ -72,19 +70,34 @@ namespace RockCollect.Stages
             {
                 if (!GDALSerializer.LoadMetadata(ImagePath, out WidthPixels, out HeightPixels, out int bands,
                                                  out Type[] bandDataType))
+                {
                     return false;
+                }
                 
                 GetNumTiles(WidthPixels, HeightPixels, out TilesHorizontal, out TilesVertical);
                 
                 remainingTilesToTune = Enumerable.Range(0, TilesHorizontal * TilesVertical).ToList();
                 
+                //cull out already tuned tiles
+                var alreadyTuned = new HashSet<int>();
+                for (int y = 0; y < TilesVertical; y++)
+                {
+                    for (int x = 0; x < TilesHorizontal; x++)
+                    {
+                        int idx = GetTileIndex(x, y);
+                        if (File.Exists(GetTileJSON(idx)))
+                        {
+                            alreadyTuned.Add(idx);
+                        }
+                    }
+                }
+
+                remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
+                
                 if (this.inData.Data.ContainsKey("SHAPE_FILE") && !string.IsNullOrEmpty(inData.Data["SHAPE_FILE"]))
+                {
                     ParseShapeFile(inData.Data["SHAPE_FILE"]);
-                
-                TilesToVisit = remainingTilesToTune.Count();
-                
-                tunedTiles = new List<int>();
-                skippedTiles = new List<int>();
+                }
             }
 
             return true;
@@ -95,13 +108,19 @@ namespace RockCollect.Stages
             if (base.SaveOutput())
             {
                 if (ActiveImage == null)
+                {
                     return false;
+                }
                 
                 if (string.IsNullOrEmpty(ImagePath))
+                {
                     return false;
+                }
 
                 if (ActiveTile == -1)
+                {
                     return false;
+                }
 
                 string rawTilePath = Path.Combine(GetDirectory(Dir.Output), "rawtile.pgm");
                 GDALSerializer.Save(ActiveImage, rawTilePath, null);
@@ -176,10 +195,12 @@ namespace RockCollect.Stages
 
         public override bool Deactivate(bool forward)
         {
-            if (!base.Deactivate(forward))
+            if (ActiveTile == -1)
+            {
                 return false;
+            }
 
-            return true;
+            return base.Deactivate(forward);
         }
 
         string GetTileJSON(int tileIndex)
@@ -409,17 +430,31 @@ namespace RockCollect.Stages
             return Path.GetFileNameWithoutExtension(ImagePath);
         }
 
-        public int GetTilesToVisit()
-        {
-            return TilesToVisit;
-        }
-
         public int GetRemainingTilesToTune()
         {
             if (remainingTilesToTune == null)
+            {
                 return 0;
+            }
 
-            return (int)Math.Ceiling(remainingTilesToTune.Count()/(Skips + 1.0));
+            int ret = remainingTilesToTune.Count();
+
+            if (Skips > 0)
+            {
+                ret = ret / (Skips + 1);
+            }
+
+            return ret;
+        }
+
+        public int GetSkippedTiles()
+        {
+            if (skippedTiles == null)
+            {
+                return 0;
+            }
+
+            return skippedTiles.Count();
         }
 
         public void GetWidthHeightPixels(out int widthPixels, out int heightPixels)
@@ -466,7 +501,8 @@ namespace RockCollect.Stages
             return row * TilesHorizontal + col;
         }
 
-        void GetAvailableTilePixels(int pixelCol, int pixelRow, int imageWidth, int imageHeight, out int availableWidth, out int availableHeight)
+        void GetAvailableTilePixels(int pixelCol, int pixelRow, int imageWidth, int imageHeight,
+                                    out int availableWidth, out int availableHeight)
         {
             availableWidth = imageWidth - pixelCol;
             availableHeight = imageHeight - pixelRow;
@@ -496,8 +532,10 @@ namespace RockCollect.Stages
                 ClearTile();
             }
 
-            if (false == base.Activate(workArea, statusForm, forward))
+            if (!base.Activate(workArea, statusForm, forward))
+            {
                 return false;
+            }
 
             return true;
         }
@@ -523,30 +561,59 @@ namespace RockCollect.Stages
             return ActiveImage?.ToBitmap();
         }
 
-        public bool ChooseTile()
+        public bool AutoChooseTile()
         {
-            if (remainingTilesToTune == null || remainingTilesToTune.Count == 0)
-                return false;
-
-            //skips
-            for(int counter = 0; counter < Skips && remainingTilesToTune.Count > 1; counter++)
+            if (ActiveTile >= 0 && !File.Exists(GetTileJSON(ActiveTile)))
             {
-                skippedTiles.Add(remainingTilesToTune.First());
-                remainingTilesToTune.RemoveAt(0);
+                if (skippedTiles == null)
+                {
+                    skippedTiles = new List<int>();
+                }
+
+                skippedTiles.Add(ActiveTile);
             }
 
-            ActiveTile = remainingTilesToTune.First();
-            tunedTiles.Add(ActiveTile);
-            remainingTilesToTune.RemoveAt(0);
+            ClearTile();
+
+            do
+            {
+                if (remainingTilesToTune == null || remainingTilesToTune.Count == 0)
+                {
+                    return false;
+                }
+
+                for (int counter = 0; counter < Skips; counter++)
+                {
+                    if (skippedTiles == null)
+                    {
+                        skippedTiles = new List<int>();
+                    }
+
+                    skippedTiles.Add(remainingTilesToTune.First());
+                    
+                    remainingTilesToTune.RemoveAt(0);
+                    if (remainingTilesToTune.Count == 0)
+                    {
+                        return false;
+                    }
+                }
+
+                ActiveTile = remainingTilesToTune.First();
+                remainingTilesToTune.RemoveAt(0);
+
+            } while (File.Exists(GetTileJSON(ActiveTile)));
 
             GetTileAddress(ActiveTile, out int tileCol, out int tileRow);
+
             GetTilePixels(tileCol, tileRow, TILESIZE, out int pixelCol, out int pixelRow);
-            GetAvailableTilePixels(pixelCol, pixelRow, this.WidthPixels, this.HeightPixels, out int availableWidth, out int availableHeight);
+            GetAvailableTilePixels(pixelCol, pixelRow, this.WidthPixels, this.HeightPixels,
+                                   out int availableWidth, out int availableHeight);
 
             Rectangle rect = new Rectangle(pixelCol, pixelRow,
                 Math.Min(availableWidth, TILESIZE + TILEOVERLAP), Math.Min(availableHeight, TILESIZE + TILEOVERLAP));
 
             ActiveImage = GDALSerializer.Load(ImagePath, rect.X, rect.Y, rect.Width, rect.Height);
+
             return true;
         }
 
@@ -635,7 +702,7 @@ namespace RockCollect.Stages
 
             var visitPerGroup = new Dictionary<string, int>();
             var runPerGroup = new Dictionary<string, int>();
-            remainingTilesToTune = new List<int>();
+            var tilesToVisit = new HashSet<int>();
             for (int i = 0; i < nt; i++)
             {
                 if (TileShapeData[i] != null)
@@ -644,13 +711,15 @@ namespace RockCollect.Stages
                     if (!visitPerGroup.ContainsKey(grp)) visitPerGroup[grp] = 0;
                     if (TileShapeData[i].visit)
                     {
-                        remainingTilesToTune.Add(i);
+                        tilesToVisit.Add(i);
                         visitPerGroup[grp] = visitPerGroup[grp] + 1;
                     }
                     if (!runPerGroup.ContainsKey(grp)) runPerGroup[grp] = 0;
                     if (TileShapeData[i].run) runPerGroup[grp] = runPerGroup[grp] + 1;
                 }
             }
+
+            remainingTilesToTune = remainingTilesToTune.Where(tile => tilesToVisit.Contains(tile)).ToList();
         }
         
         string DbfParseString(byte[] data)
