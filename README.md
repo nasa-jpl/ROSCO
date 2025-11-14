@@ -87,9 +87,9 @@ Then open `RockCollect/Source/RockCollect.sln` in Visual Studio 16 2019.  In the
 
 Open a command prompt and then run the following commands to copy the RockDetector shared library and then launch the RockCollect UI:
 ```
-cd RockCollect
-cp ../RockDetector/build/Release/RockDetectorShared.dll bin/Release/
-./bin/Release/RockCollect.exe
+cd ROSCO
+cp ./RockDetector/build/Release/RockDetectorShared.dll ./RockCollect/bin/Release/
+./RockCollect/bin/Release/RockCollect.exe
 ```
 
 ## References
