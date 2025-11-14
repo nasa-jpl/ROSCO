@@ -26,7 +26,7 @@ namespace RockCollect
         private void RefreshWorkflowButtons()
         {
             this.buttonNext.Enabled = true;
-            this.buttonPrevious.Enabled = !this.Workflow.AtFirstStage();
+            this.buttonPrevious.Enabled = this.Workflow.AtStage() > 1;
         }
 
         private void Form1_Load(object sender, EventArgs e)
@@ -75,6 +75,7 @@ namespace RockCollect
             this.Workflow.PreviousStage();
             RefreshWorkflowButtons();
         }
+
         private void buttonNext_Click(object sender, EventArgs e)
         {
             NextStage();
