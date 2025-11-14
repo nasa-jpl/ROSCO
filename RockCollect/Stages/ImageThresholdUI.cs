@@ -19,11 +19,12 @@ namespace RockCollect.Stages
             InitializeComponent();
             Stage = stage;
             stage.OnTeardownUI = () => {
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxTile.Image.Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
             };
         }
@@ -48,15 +49,15 @@ namespace RockCollect.Stages
                 bmp = Stage.GetOverlayBitmap();
             }
 
-            //if(this.pictureBoxTile.Image != null)
-            //{
-            //    this.pictureBoxTile.Image.Dispose();
-            //}
+            System.Drawing.Image old = this.pictureBoxTile.Image;
+            if (old != null)
+            {
+                this.pictureBoxTile.Image = null;
+                old.Dispose();
+            }
 
             this.pictureBoxTile.Image = bmp;
             
-            //bmp.Dispose();
-
             this.labelGammaVal.Text = Stage.GetGamma().ToString("F2");
             this.labelThresholdVal.Text = Stage.GetThresholdOverride().ToString();
 

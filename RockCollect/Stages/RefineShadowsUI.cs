@@ -19,24 +19,27 @@ namespace RockCollect.Stages
             InitializeComponent();
             Stage = stage;
             stage.OnTeardownUI = () => {
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxTile.Image.Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
             };
         }
 
         private void RefreshUI(RockDetector.DetectionResults results)
         {
-            if (this.pictureBoxTile.Image != null)
+            System.Drawing.Image old = this.pictureBoxTile.Image;
+            if (old != null)
             {
-                ((IDisposable)this.pictureBoxTile.Image).Dispose();
                 this.pictureBoxTile.Image = null;
+                old.Dispose();
             }
 
             this.pictureBoxTile.Image = Stage.GetCurrentBlobsImage();
+
             RefineShadowsStatusUI shadowstatusUI = (RefineShadowsStatusUI)Stage.StatusControl;
             shadowstatusUI.UpdateDataGrid(results);
         }
@@ -65,11 +68,12 @@ namespace RockCollect.Stages
                 }
             }
 
-            //if (this.pictureBoxTile.Image != null && this.pictureBoxTile.Image != blobImage)
-            //{
-            //    ((IDisposable)this.pictureBoxTile.Image).Dispose();
-            //    this.pictureBoxTile.Image = null;
-            //}
+            System.Drawing.Image old = this.pictureBoxTile.Image;
+            if (old != null)
+            {
+                this.pictureBoxTile.Image = null;
+                old.Dispose();
+            }
 
             this.pictureBoxTile.Image = blobImage;
         }

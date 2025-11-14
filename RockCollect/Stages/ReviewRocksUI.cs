@@ -19,11 +19,12 @@ namespace RockCollect.Stages
             InitializeComponent();
             Stage = stage;
             stage.OnTeardownUI = () => {
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxTile.Image.Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
             };
         }
@@ -106,40 +107,39 @@ namespace RockCollect.Stages
         internal void SetSelectedRockUI(int label, RockDetector.DetectionResults results)
         {
             Bitmap detectionsImage = GetDetectionsImage();
-            
-                if (label >= 0)
+
+            if (label >= 0)
+            {
+                using (Graphics grf = Graphics.FromImage(detectionsImage))
                 {
-                    using (Graphics grf = Graphics.FromImage(detectionsImage))
+                    //ellipse
+                    using (Pen brush = new Pen(Color.Blue))
                     {
-                        //ellipse
-                        using (Pen brush = new Pen(Color.Blue))
-                        {
-                            var rock = results.outRocks.Where(x => x.id == label).First();
-
-                            float upperLeftX = rock.rockX - rock.rockWidth / 2.0f;
-                            float upperLeftY = rock.rockY - rock.rockWidth / 2.0f;
-                            grf.DrawEllipse(brush, upperLeftX, upperLeftY, rock.rockWidth, rock.rockWidth);
-
-                        }
+                        var rock = results.outRocks.Where(x => x.id == label).First();
+                        float upperLeftX = rock.rockX - rock.rockWidth / 2.0f;
+                        float upperLeftY = rock.rockY - rock.rockWidth / 2.0f;
+                        grf.DrawEllipse(brush, upperLeftX, upperLeftY, rock.rockWidth, rock.rockWidth);
                     }
                 }
+            }
 
-            if (this.pictureBoxTile.Image != null)
+            System.Drawing.Image old = this.pictureBoxTile.Image;
+            if (old != null)
             {
-                ((IDisposable)this.pictureBoxTile.Image).Dispose();
                 this.pictureBoxTile.Image = null;
+                old.Dispose();
             }
 
             this.pictureBoxTile.Image = detectionsImage;
-           
         }
 
         private void RefreshUI(RockDetector.DetectionResults results, RockDetector.DetectionResults passiveResults)
         {
-            if (this.pictureBoxTile.Image != null)
+            System.Drawing.Image old = this.pictureBoxTile.Image;
+            if (old != null)
             {
-                ((IDisposable)this.pictureBoxTile.Image).Dispose();
                 this.pictureBoxTile.Image = null;
+                old.Dispose();
             }
 
             Bitmap detectionsImage = GetDetectionsImage();            

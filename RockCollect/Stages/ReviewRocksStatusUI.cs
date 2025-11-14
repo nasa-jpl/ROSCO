@@ -36,11 +36,12 @@ namespace RockCollect.Stages
             InitializeComponent();
             reviewRocksUI = (ReviewRocksUI)reviewRocksMainUI;
             reviewRocksUI.Stage.OnTeardownStatusUI = () => {
-                if (this.pictureBoxSelectedRock.Image != null)
+                System.Drawing.Image old = this.pictureBoxSelectedRock.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxSelectedRock.Image.Dispose();
                     this.pictureBoxSelectedRock.Image = null;
+                    old.Dispose();
                 }
             };
 
@@ -211,11 +212,11 @@ namespace RockCollect.Stages
 
                 this.labelNumCFARocks.Text = cfaRocks.ToString();
 
-                //if (sourceBitmap != null)
-                //{
-                //    ((IDisposable)sourceBitmap).Dispose();
-                //    sourceBitmap = null;
-                //}
+                if (sourceBitmap != null)
+                {
+                    ((IDisposable)sourceBitmap).Dispose();
+                    sourceBitmap = null;
+                }
             }
         }
 
@@ -224,7 +225,13 @@ namespace RockCollect.Stages
             if (e.RowIndex == -1 || e.RowIndex >= ActiveResults.outRocks.Length)
             {
                 reviewRocksUI.SetSelectedRockUI(-1, ActiveResults);
-                this.pictureBoxSelectedRock.Image = null;
+
+                System.Drawing.Image old = this.pictureBoxSelectedRock.Image;
+                if (old != null)
+                {
+                    this.pictureBoxSelectedRock.Image = null;
+                    old.Dispose();
+                }
             }
             else
             {
@@ -313,6 +320,14 @@ namespace RockCollect.Stages
                             grf.DrawEllipse(brush, centroidXInCrop, centroidYInCrop, 1, 1);
                         }
                     }
+
+                    System.Drawing.Image old = this.pictureBoxSelectedRock.Image;
+                    if (old != null)
+                    {
+                        this.pictureBoxSelectedRock.Image = null;
+                        old.Dispose();
+                    }
+
                     this.pictureBoxSelectedRock.Image = selectedBitmap;
                 }
             }
