@@ -132,6 +132,29 @@ namespace RockCollect
             }
         }
 
+        //index -> col, row
+        public static void GetTileAddress(int index, int numTilesHorizontal, out int tileCol, out int tileRow)
+        {
+            tileCol = index % numTilesHorizontal;
+            tileRow = index / numTilesHorizontal;
+        }
+
+        //col, row -> index
+        public static int GetTileIndex(int col, int row, int numTilesHorizontal)
+        {
+            return row * numTilesHorizontal + col;
+        }
+
+        public static string GetTileOutputName(int tileCol, int tileRow)
+        {
+            return string.Format("Tile_{0}_{1}", tileCol.ToString("D6"), tileRow.ToString("D6"));
+        }
+
+        public string GetTileJSON(int tileCol, int tileRow)
+        {
+            return Path.Combine(GetDirectory(Dir.FinalOutput), GetTileOutputName(tileCol, tileRow) + ".json");
+        }
+
         public virtual bool Activate(Panel workArea, Form statusForm, bool forward)
         {
             WorkArea = workArea;

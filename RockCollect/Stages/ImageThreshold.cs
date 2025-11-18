@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -58,6 +59,13 @@ namespace RockCollect.Stages
             ThresholdOverride = DEFAULT_THRESHOLDOVERRIDE;
         }
 
+        public void ResetToDefaults()
+        {
+            Gamma = DEFAULT_GAMMA;
+            ThresholdOverride = DEFAULT_THRESHOLDOVERRIDE;
+            UpdateShadowAndOverlay();
+        }
+
         public override bool LoadInput(string directory)
         {
             bool result = base.LoadInput(directory);
@@ -71,7 +79,8 @@ namespace RockCollect.Stages
             if (!File.Exists(TilePath))
                 throw new Exception(string.Format("Input tile image {0} doesn't exist", TilePath));
 
-            GDALSerializer.LoadMetadata(TilePath, out int widthPixels, out int heightPixels, out int bands, out Type[] dataTypes);
+            GDALSerializer.LoadMetadata(TilePath, out int widthPixels, out int heightPixels, out int bands,
+                                        out Type[] dataTypes);
             TileImage = GDALSerializer.Load(TilePath, 0, 0, widthPixels, heightPixels);
 
             if (TileImage == null)
@@ -80,7 +89,16 @@ namespace RockCollect.Stages
             ShadowPath = Path.Combine(GetDirectory(Dir.Output), "shadow.pgm");
             GammaPath = Path.Combine(GetDirectory(Dir.Output), "gamma.pgm");
 
+            string tileJson = GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
+            if (File.Exists(tileJson))
+            {
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson));
+                Gamma = float.Parse(existing.Data["GAMMA"]);
+                ThresholdOverride = int.Parse(existing.Data["GAMMA_THRESHOLD_OVERRIDE"]);
+            }
+                
             UpdateShadowAndOverlay();
+
             return true;
         }
 

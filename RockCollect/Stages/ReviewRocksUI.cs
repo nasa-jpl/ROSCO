@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using RockCollect;
 
 namespace RockCollect.Stages
 {
@@ -31,47 +32,9 @@ namespace RockCollect.Stages
 
         private void InitializeTrackBarValues()
         {
-            RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE, trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
-        }
-
-        float RemapValues(float fromValue, float fromMin, float fromMax, float toMin, float toMax)
-        {
-            float pct = (fromValue - fromMin) / (fromMax - fromMin);
-            return (pct * (toMax - toMin) + toMin);
-        }
-
-        private void RefreshTrackbar(float stageVal, float stageMin, float stageMax, float stageDisable, TrackBar trackBar, Label valLabel, CheckBox check)
-        {
-            if (stageVal == stageDisable)
-            {
-                valLabel.Text = "Disabled";
-
-                if (trackBar.Enabled == true)
-                {
-                    trackBar.Enabled = false;
-                    valLabel.Enabled = false;
-                }
-
-                if (check != null && check.Checked == true)
-                {
-                    check.Checked = false;
-                }
-            }
-            else
-            {
-                if (trackBar.Enabled == false)
-                {
-                    trackBar.Enabled = true;
-                    valLabel.Enabled = true;
-                }
-                trackBar.Value = (int)RemapValues(stageVal, stageMin, stageMax, trackBar.Minimum, trackBar.Maximum);
-                valLabel.Text = stageVal.ToString("F2");
-
-                if (check != null && check.Checked == false)
-                {
-                    check.Checked = true;
-                }
-            }
+            Util.RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE,
+                                 RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE,
+                                 trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
         }
 
         Bitmap GetDetectionsImage()
@@ -182,8 +145,9 @@ namespace RockCollect.Stages
 
         private void trackBarConfidence_ValueChanged(object sender, EventArgs e)
         {
-            float confidence = RemapValues(trackBarConfidence.Value, trackBarConfidence.Minimum, trackBarConfidence.Maximum,
-                                           RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE);
+            float confidence =
+                Util.RemapValues(trackBarConfidence.Value, trackBarConfidence.Minimum, trackBarConfidence.Maximum,
+                                 RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE);
 
             Stage.SetConfidence(confidence, out RockDetector.DetectionResults results);
 
@@ -203,7 +167,9 @@ namespace RockCollect.Stages
                 Stage.SetConfidence(RockDetector.DISABLE_CONFIDENCE, out results);
             }
 
-            RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE, trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
+            Util.RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE,
+                                 RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE,
+                                 trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
             RefreshUI(results, Stage.GetComparisonDetections());
         }
 
@@ -271,6 +237,16 @@ namespace RockCollect.Stages
                 this.checkBoxConfidence.Enabled = false;
                 RefreshUI(Stage.GetYourMatchedDifferentRocks(),Stage.GetComparisonDetections());
             }
+        }
+
+        private void buttonReset_Click(object sender, EventArgs e)
+        {
+            Stage.ResetToDefaults(out RockDetector.DetectionResults results);
+            labelConfidenceVal.Text = Stage.GetConfidence().ToString("F2");
+            RefreshUI(results, Stage.GetComparisonDetections());
+            Util.RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE,
+                                 RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE,
+                                 trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
         }
     }
 }

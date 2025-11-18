@@ -104,8 +104,6 @@ namespace RockCollect.Stages
         {
             if (this.Visible == true)
             {
-                this.trackBarGamma.Value = GammaToTrackBarValue(Stage.GetGamma());
-                this.trackBarThreshold.Value = Stage.GetThresholdOverride();
                 RefreshUI(true);
             }
         }
@@ -146,6 +144,14 @@ namespace RockCollect.Stages
         {
             Stage.SetThresholdOverride(trackBarThreshold.Value);
             RefreshUI();
+        }
+
+        private void buttonReset_Click(object sender, EventArgs e)
+        {
+            Stage.ResetToDefaults();
+            RefreshUI();
+            trackBarGamma.Value = GammaToTrackBarValue(Stage.GetGamma());
+            trackBarThreshold.Value = Stage.GetThresholdOverride();
         }
     }
 }

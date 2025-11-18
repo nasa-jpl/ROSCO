@@ -43,6 +43,7 @@
             this.radioButtonOnlyYours = new System.Windows.Forms.RadioButton();
             this.radioButtonTheirs = new System.Windows.Forms.RadioButton();
             this.radioButtonYours = new System.Windows.Forms.RadioButton();
+            this.buttonReset = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxTile)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarConfidence)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -52,10 +53,10 @@
             // 
             this.label1.AutoSize = true;
             this.label1.Font = new System.Drawing.Font("Microsoft Sans Serif", 12F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label1.Location = new System.Drawing.Point(32, 21);
-            this.label1.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label1.Location = new System.Drawing.Point(16, 11);
+            this.label1.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(358, 37);
+            this.label1.Size = new System.Drawing.Size(182, 20);
             this.label1.TabIndex = 0;
             this.label1.Text = "Review Rock Detections";
             // 
@@ -65,10 +66,9 @@
             | System.Windows.Forms.AnchorStyles.Left) 
             | System.Windows.Forms.AnchorStyles.Right)));
             this.pictureBoxTile.BackColor = System.Drawing.SystemColors.ControlDark;
-            this.pictureBoxTile.Location = new System.Drawing.Point(40, 73);
-            this.pictureBoxTile.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.pictureBoxTile.Location = new System.Drawing.Point(20, 38);
             this.pictureBoxTile.Name = "pictureBoxTile";
-            this.pictureBoxTile.Size = new System.Drawing.Size(1100, 1058);
+            this.pictureBoxTile.Size = new System.Drawing.Size(550, 550);
             this.pictureBoxTile.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pictureBoxTile.TabIndex = 5;
             this.pictureBoxTile.TabStop = false;
@@ -77,11 +77,10 @@
             // 
             this.trackBarConfidence.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.trackBarConfidence.LargeChange = 100;
-            this.trackBarConfidence.Location = new System.Drawing.Point(1184, 127);
-            this.trackBarConfidence.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.trackBarConfidence.Location = new System.Drawing.Point(592, 66);
             this.trackBarConfidence.Maximum = 1000;
             this.trackBarConfidence.Name = "trackBarConfidence";
-            this.trackBarConfidence.Size = new System.Drawing.Size(516, 90);
+            this.trackBarConfidence.Size = new System.Drawing.Size(258, 45);
             this.trackBarConfidence.SmallChange = 5;
             this.trackBarConfidence.TabIndex = 7;
             this.trackBarConfidence.ValueChanged += new System.EventHandler(this.trackBarConfidence_ValueChanged);
@@ -90,10 +89,9 @@
             // 
             this.labelConfidence.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelConfidence.AutoSize = true;
-            this.labelConfidence.Location = new System.Drawing.Point(1188, 85);
-            this.labelConfidence.Margin = new System.Windows.Forms.Padding(6, 0, 6, 0);
+            this.labelConfidence.Location = new System.Drawing.Point(594, 44);
             this.labelConfidence.Name = "labelConfidence";
-            this.labelConfidence.Size = new System.Drawing.Size(329, 25);
+            this.labelConfidence.Size = new System.Drawing.Size(166, 13);
             this.labelConfidence.TabIndex = 8;
             this.labelConfidence.Text = "Confidence (vs. Reference Rock)";
             // 
@@ -101,20 +99,19 @@
             // 
             this.labelConfidenceVal.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelConfidenceVal.AutoSize = true;
-            this.labelConfidenceVal.Location = new System.Drawing.Point(1600, 85);
-            this.labelConfidenceVal.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.labelConfidenceVal.Location = new System.Drawing.Point(800, 44);
+            this.labelConfidenceVal.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelConfidenceVal.Name = "labelConfidenceVal";
-            this.labelConfidenceVal.Size = new System.Drawing.Size(0, 25);
+            this.labelConfidenceVal.Size = new System.Drawing.Size(0, 13);
             this.labelConfidenceVal.TabIndex = 20;
             // 
             // checkBoxConfidence
             // 
             this.checkBoxConfidence.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBoxConfidence.AutoSize = true;
-            this.checkBoxConfidence.Location = new System.Drawing.Point(1152, 127);
-            this.checkBoxConfidence.Margin = new System.Windows.Forms.Padding(6, 6, 6, 6);
+            this.checkBoxConfidence.Location = new System.Drawing.Point(575, 66);
             this.checkBoxConfidence.Name = "checkBoxConfidence";
-            this.checkBoxConfidence.Size = new System.Drawing.Size(28, 27);
+            this.checkBoxConfidence.Size = new System.Drawing.Size(15, 14);
             this.checkBoxConfidence.TabIndex = 33;
             this.checkBoxConfidence.UseVisualStyleBackColor = true;
             this.checkBoxConfidence.CheckedChanged += new System.EventHandler(this.checkBoxConfidence_CheckedChanged);
@@ -123,10 +120,10 @@
             // 
             this.labelNumRocks.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelNumRocks.AutoSize = true;
-            this.labelNumRocks.Location = new System.Drawing.Point(1544, 577);
-            this.labelNumRocks.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.labelNumRocks.Location = new System.Drawing.Point(772, 300);
+            this.labelNumRocks.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelNumRocks.Name = "labelNumRocks";
-            this.labelNumRocks.Size = new System.Drawing.Size(24, 25);
+            this.labelNumRocks.Size = new System.Drawing.Size(13, 13);
             this.labelNumRocks.TabIndex = 36;
             this.labelNumRocks.Text = "0";
             // 
@@ -134,10 +131,10 @@
             // 
             this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(1180, 577);
-            this.label2.Margin = new System.Windows.Forms.Padding(4, 0, 4, 0);
+            this.label2.Location = new System.Drawing.Point(590, 300);
+            this.label2.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.label2.Name = "label2";
-            this.label2.Size = new System.Drawing.Size(181, 25);
+            this.label2.Size = new System.Drawing.Size(91, 13);
             this.label2.TabIndex = 35;
             this.label2.Text = "Number of rocks: ";
             // 
@@ -150,11 +147,11 @@
             this.groupBox1.Controls.Add(this.radioButtonOnlyYours);
             this.groupBox1.Controls.Add(this.radioButtonTheirs);
             this.groupBox1.Controls.Add(this.radioButtonYours);
-            this.groupBox1.Location = new System.Drawing.Point(1180, 235);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.groupBox1.Location = new System.Drawing.Point(590, 122);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.groupBox1.Size = new System.Drawing.Size(444, 327);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Size = new System.Drawing.Size(222, 170);
             this.groupBox1.TabIndex = 37;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Select Data";
@@ -162,10 +159,10 @@
             // radioButtonBothDifferent
             // 
             this.radioButtonBothDifferent.AutoSize = true;
-            this.radioButtonBothDifferent.Location = new System.Drawing.Point(22, 271);
-            this.radioButtonBothDifferent.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButtonBothDifferent.Location = new System.Drawing.Point(11, 141);
+            this.radioButtonBothDifferent.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButtonBothDifferent.Name = "radioButtonBothDifferent";
-            this.radioButtonBothDifferent.Size = new System.Drawing.Size(264, 29);
+            this.radioButtonBothDifferent.Size = new System.Drawing.Size(135, 17);
             this.radioButtonBothDifferent.TabIndex = 5;
             this.radioButtonBothDifferent.TabStop = true;
             this.radioButtonBothDifferent.Text = "Rocks in both, different";
@@ -175,10 +172,10 @@
             // radioButtonBothIdentical
             // 
             this.radioButtonBothIdentical.AutoSize = true;
-            this.radioButtonBothIdentical.Location = new System.Drawing.Point(22, 227);
-            this.radioButtonBothIdentical.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButtonBothIdentical.Location = new System.Drawing.Point(11, 118);
+            this.radioButtonBothIdentical.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButtonBothIdentical.Name = "radioButtonBothIdentical";
-            this.radioButtonBothIdentical.Size = new System.Drawing.Size(266, 29);
+            this.radioButtonBothIdentical.Size = new System.Drawing.Size(136, 17);
             this.radioButtonBothIdentical.TabIndex = 4;
             this.radioButtonBothIdentical.TabStop = true;
             this.radioButtonBothIdentical.Text = "Rocks in both, identical";
@@ -188,10 +185,10 @@
             // radioButtonOnlyTheirs
             // 
             this.radioButtonOnlyTheirs.AutoSize = true;
-            this.radioButtonOnlyTheirs.Location = new System.Drawing.Point(22, 179);
-            this.radioButtonOnlyTheirs.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButtonOnlyTheirs.Location = new System.Drawing.Point(11, 93);
+            this.radioButtonOnlyTheirs.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButtonOnlyTheirs.Name = "radioButtonOnlyTheirs";
-            this.radioButtonOnlyTheirs.Size = new System.Drawing.Size(231, 29);
+            this.radioButtonOnlyTheirs.Size = new System.Drawing.Size(117, 17);
             this.radioButtonOnlyTheirs.TabIndex = 3;
             this.radioButtonOnlyTheirs.TabStop = true;
             this.radioButtonOnlyTheirs.Text = "Rocks only in theirs";
@@ -201,10 +198,10 @@
             // radioButtonOnlyYours
             // 
             this.radioButtonOnlyYours.AutoSize = true;
-            this.radioButtonOnlyYours.Location = new System.Drawing.Point(22, 135);
-            this.radioButtonOnlyYours.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButtonOnlyYours.Location = new System.Drawing.Point(11, 70);
+            this.radioButtonOnlyYours.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButtonOnlyYours.Name = "radioButtonOnlyYours";
-            this.radioButtonOnlyYours.Size = new System.Drawing.Size(231, 29);
+            this.radioButtonOnlyYours.Size = new System.Drawing.Size(117, 17);
             this.radioButtonOnlyYours.TabIndex = 2;
             this.radioButtonOnlyYours.TabStop = true;
             this.radioButtonOnlyYours.Text = "Rocks only in yours";
@@ -214,10 +211,10 @@
             // radioButtonTheirs
             // 
             this.radioButtonTheirs.AutoSize = true;
-            this.radioButtonTheirs.Location = new System.Drawing.Point(22, 88);
-            this.radioButtonTheirs.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButtonTheirs.Location = new System.Drawing.Point(11, 46);
+            this.radioButtonTheirs.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButtonTheirs.Name = "radioButtonTheirs";
-            this.radioButtonTheirs.Size = new System.Drawing.Size(200, 29);
+            this.radioButtonTheirs.Size = new System.Drawing.Size(103, 17);
             this.radioButtonTheirs.TabIndex = 1;
             this.radioButtonTheirs.Text = "Their Detections";
             this.radioButtonTheirs.UseVisualStyleBackColor = true;
@@ -227,20 +224,31 @@
             // 
             this.radioButtonYours.AutoSize = true;
             this.radioButtonYours.Checked = true;
-            this.radioButtonYours.Location = new System.Drawing.Point(22, 40);
-            this.radioButtonYours.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
+            this.radioButtonYours.Location = new System.Drawing.Point(11, 21);
+            this.radioButtonYours.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
             this.radioButtonYours.Name = "radioButtonYours";
-            this.radioButtonYours.Size = new System.Drawing.Size(197, 29);
+            this.radioButtonYours.Size = new System.Drawing.Size(101, 17);
             this.radioButtonYours.TabIndex = 0;
             this.radioButtonYours.TabStop = true;
             this.radioButtonYours.Text = "Your Detections";
             this.radioButtonYours.UseVisualStyleBackColor = true;
             this.radioButtonYours.CheckedChanged += new System.EventHandler(this.radioButtonYours_CheckedChanged);
             // 
+            // buttonReset
+            // 
+            this.buttonReset.Location = new System.Drawing.Point(585, 350);
+            this.buttonReset.Name = "buttonReset";
+            this.buttonReset.Size = new System.Drawing.Size(250, 23);
+            this.buttonReset.TabIndex = 38;
+            this.buttonReset.Text = "Reset to Defaults";
+            this.buttonReset.UseVisualStyleBackColor = true;
+            this.buttonReset.Click += new System.EventHandler(this.buttonReset_Click);
+            // 
             // ReviewRocksUI
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(12F, 25F);
+            this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.buttonReset);
             this.Controls.Add(this.groupBox1);
             this.Controls.Add(this.labelNumRocks);
             this.Controls.Add(this.label2);
@@ -250,10 +258,10 @@
             this.Controls.Add(this.trackBarConfidence);
             this.Controls.Add(this.pictureBoxTile);
             this.Controls.Add(this.label1);
-            this.Margin = new System.Windows.Forms.Padding(4, 4, 4, 4);
-            this.MinimumSize = new System.Drawing.Size(1700, 1154);
+            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.MinimumSize = new System.Drawing.Size(850, 600);
             this.Name = "ReviewRocksUI";
-            this.Size = new System.Drawing.Size(1700, 1154);
+            this.Size = new System.Drawing.Size(850, 600);
             this.Load += new System.EventHandler(this.ReviewRocksUI_Load);
             this.VisibleChanged += new System.EventHandler(this.ReviewRocksUI_VisibleChanged);
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxTile)).EndInit();
@@ -282,5 +290,6 @@
         private System.Windows.Forms.RadioButton radioButtonBothDifferent;
         private System.Windows.Forms.RadioButton radioButtonBothIdentical;
         private System.Windows.Forms.RadioButton radioButtonOnlyTheirs;
+        private System.Windows.Forms.Button buttonReset;
     }
 }

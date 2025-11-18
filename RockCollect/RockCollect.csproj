@@ -197,6 +197,7 @@
     <Compile Include="StatusWindow.Designer.cs">
       <DependentUpon>StatusWindow.cs</DependentUpon>
     </Compile>
+    <Compile Include="Util.cs" />
     <Compile Include="Workflow.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>

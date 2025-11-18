@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -33,6 +34,12 @@ namespace RockCollect.Stages
 
             settings = new RockDetector.Settings();
             settings.Confidence = RockDetector.DEFAULT_CONFIDENCE;
+        }
+
+        public void ResetToDefaults(out RockDetector.DetectionResults results)
+        {
+            settings.Confidence = RockDetector.DEFAULT_CONFIDENCE;
+            UpdateDetections(out results, out DetectionsBitmap);
         }
 
         public override UserControl CreateUI()
@@ -87,6 +94,13 @@ namespace RockCollect.Stages
             settings.MeanGradient = float.Parse(inData.Data["MEANGRADIENT"]);
             settings.MinShadowSplit = float.Parse(inData.Data["MINSHADOWSPLIT"]);
             settings.GammaThresholdOverride = int.Parse(inData.Data["GAMMA_THRESHOLD_OVERRIDE"]);
+
+            string tileJson = GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
+            if (File.Exists(tileJson))
+            {
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson));
+                settings.Confidence = float.Parse(existing.Data["CONFIDENCE"]);
+            }
 
             UpdateDetections(out RockDetector.DetectionResults results, out DetectionsBitmap);
 
@@ -441,28 +455,25 @@ namespace RockCollect.Stages
             }
         }
 
-        static public string GetTileOutputName(int tileIndex, int numTilesHorizontal)
+        string GetTileOutputName(int tileIndex)
         {
-            TileSelect.GetTileAddress(tileIndex, numTilesHorizontal, out int tileCol, out int tileRow);
-            return string.Format("Tile_{0}_{1}", tileCol.ToString("D6"), tileRow.ToString("D6"));
+            GetTileAddress(tileIndex, NumTilesHorizontal, out int tileCol, out int tileRow);
+            return GetTileOutputName(tileCol, tileRow);
         }
 
         public string GetOutRockslistPath()
         {
-            return Path.Combine(GetDirectory(Dir.Output),
-                                GetTileOutputName(TileIndex, NumTilesHorizontal) + "_Rocks.txt");
+            return Path.Combine(GetDirectory(Dir.Output), GetTileOutputName(TileIndex) + "_Rocks.txt");
         }
 
         public string GetOutRocksParamsPath()
         {
-            return Path.Combine(GetDirectory(Dir.Output),
-                                GetTileOutputName(TileIndex, NumTilesHorizontal) + "_Params.txt");
+            return Path.Combine(GetDirectory(Dir.Output), GetTileOutputName(TileIndex) + "_Params.txt");
         }
 
         public override string GetOutputJSONPath()
         {
-            return Path.Combine(GetDirectory(Dir.Output),
-                                GetTileOutputName(TileIndex, NumTilesHorizontal) + ".json");
+            return Path.Combine(GetDirectory(Dir.Output), GetTileOutputName(TileIndex) + ".json");
         }
 
         public override bool SaveOutput()

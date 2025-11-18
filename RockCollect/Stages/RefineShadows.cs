@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -32,6 +33,16 @@ namespace RockCollect.Stages
             settings.ShadowAspect = RockDetector.DEFAULT_ASPECT;
             settings.MeanGradient = RockDetector.DEFAULT_GRADIENT;
             settings.MinShadowSplit = RockDetector.DEFAULT_SPLIT;
+        }
+
+        public void ResetToDefaults(out RockDetector.DetectionResults results)
+        {
+            settings.MinShadowArea = RockDetector.DEFAULT_MIN_SHADOW_AREA;
+            settings.MaxShadowArea = RockDetector.DEFAULT_MAX_SHADOW_AREA;
+            settings.ShadowAspect = RockDetector.DEFAULT_ASPECT;
+            settings.MeanGradient = RockDetector.DEFAULT_GRADIENT;
+            settings.MinShadowSplit = RockDetector.DEFAULT_SPLIT;
+            UpdateDetections(out results);
         }
 
         public override UserControl CreateUI()
@@ -96,7 +107,19 @@ namespace RockCollect.Stages
 
             ShadowImage = ImageThreshold.CreateOverlayImage(TileImage, ShadowImage, 0); //red
 
+            string tileJson = GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
+            if (File.Exists(tileJson))
+            {
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson));
+                settings.MinShadowArea = float.Parse(existing.Data["MINSHADOWAREA"]);
+                settings.MaxShadowArea = float.Parse(existing.Data["MAXSHADOWAREA"]);
+                settings.ShadowAspect = float.Parse(existing.Data["SHADOWASPECT"]);
+                settings.MeanGradient = float.Parse(existing.Data["MEANGRADIENT"]);
+                settings.MinShadowSplit = float.Parse(existing.Data["MINSHADOWSPLIT"]);
+            }
+
             UpdateDetections(out RockDetector.DetectionResults results);
+
             return true;
         }
 

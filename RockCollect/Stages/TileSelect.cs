@@ -21,10 +21,10 @@ namespace RockCollect.Stages
         static public readonly float DATA_VERSION = 0.1f;
 
         string ImagePath;
-        int HeightPixels;
-        int WidthPixels;
-        int TilesHorizontal;
-        int TilesVertical;
+        int HeightPixels = 0;
+        int WidthPixels = 0;
+        int TilesHorizontal = 0;
+        int TilesVertical = 0;
         int ActiveTile = -1;
         Image ActiveImage;
         int Skips;
@@ -66,38 +66,39 @@ namespace RockCollect.Stages
             if (!File.Exists(ImagePath))
                 throw new Exception(string.Format("Input image {0} doesn't exist", ImagePath));
 
-            if (remainingTilesToTune == null) //don't re-init when cycling back to this stage later
+            if ((WidthPixels == 0 || HeightPixels == 0) &&
+                !GDALSerializer.LoadMetadata(ImagePath, out WidthPixels, out HeightPixels, out int bands,
+                                             out Type[] bandDataType))
             {
-                if (!GDALSerializer.LoadMetadata(ImagePath, out WidthPixels, out HeightPixels, out int bands,
-                                                 out Type[] bandDataType))
-                {
-                    return false;
-                }
-                
+                return false;
+            }
+
+            if (TilesHorizontal == 0 || TilesVertical == 0)
+            {
                 GetNumTiles(WidthPixels, HeightPixels, out TilesHorizontal, out TilesVertical);
-                
-                remainingTilesToTune = Enumerable.Range(0, TilesHorizontal * TilesVertical).ToList();
-                
-                //cull out already tuned tiles
-                var alreadyTuned = new HashSet<int>();
-                for (int y = 0; y < TilesVertical; y++)
+            }
+            
+            remainingTilesToTune = Enumerable.Range(0, TilesHorizontal * TilesVertical).ToList();
+            
+            //cull out already tuned tiles
+            var alreadyTuned = new HashSet<int>();
+            for (int y = 0; y < TilesVertical; y++)
+            {
+                for (int x = 0; x < TilesHorizontal; x++)
                 {
-                    for (int x = 0; x < TilesHorizontal; x++)
+                    if (File.Exists(GetTileJSON(x, y)))
                     {
-                        int idx = GetTileIndex(x, y);
-                        if (File.Exists(GetTileJSON(idx)))
-                        {
-                            alreadyTuned.Add(idx);
-                        }
+                        alreadyTuned.Add(GetTileIndex(x, y));
                     }
                 }
-
-                remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
-                
-                if (this.inData.Data.ContainsKey("SHAPE_FILE") && !string.IsNullOrEmpty(inData.Data["SHAPE_FILE"]))
-                {
-                    ParseShapeFile(inData.Data["SHAPE_FILE"]);
-                }
+            }
+            
+            remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
+            
+            if (inData.Data.ContainsKey("SHAPE_FILE") && !string.IsNullOrEmpty(inData.Data["SHAPE_FILE"]) &&
+                TileShapeData == null)
+            {
+                ParseShapeFile(inData.Data["SHAPE_FILE"]);
             }
 
             return true;
@@ -203,10 +204,26 @@ namespace RockCollect.Stages
             return base.Deactivate(forward);
         }
 
+        void GetTileAddress(int tileIndex, out int tileCol, out int tileRow)
+        {
+            GetTileAddress(tileIndex, TilesHorizontal, out tileCol, out tileRow);
+        }
+
+        int GetTileIndex(int col, int row)
+        {
+            return GetTileIndex(col, row, TilesHorizontal);
+        }
+
+        string GetTileOutputName(int tileIndex)
+        {
+            GetTileAddress(tileIndex, TilesHorizontal, out int tileCol, out int tileRow);
+            return GetTileOutputName(tileCol, tileRow);
+        }
+
         string GetTileJSON(int tileIndex)
         {
-            return Path.Combine(GetDirectory(Dir.FinalOutput),
-                                ReviewRocks.GetTileOutputName(tileIndex, TilesHorizontal) + ".json");
+            GetTileAddress(tileIndex, TilesHorizontal, out int tileCol, out int tileRow);
+            return GetTileJSON(tileCol, tileRow);
         }
 
         public int CountRunnableTiles()
@@ -232,8 +249,7 @@ namespace RockCollect.Stages
             {
                 for (int x = 0; x < TilesHorizontal; x++)
                 {
-                    int idx = GetTileIndex(x, y);
-                    if (File.Exists(GetTileJSON(idx))) n++;
+                    if (File.Exists(GetTileJSON(x, y))) n++;
                 }
             }
             return n;
@@ -258,14 +274,14 @@ namespace RockCollect.Stages
             {
                 for (int x = 0; x < TilesHorizontal; x++)
                 {
-                    int idx = GetTileIndex(x, y);
-                    string tileJSON = GetTileJSON(idx);
+                    string tileJSON = GetTileJSON(x, y);
                     if (File.Exists(tileJSON))
                     {
                         Console.WriteLine(string.Format("loading settings for tile at col {0}, row {1} from {2}",
                                                         x, y, tileJSON));
                         var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJSON)).Data;
                         var settings = new RockDetector.Settings(data);
+                        int idx = GetTileIndex(x, y);
                         inSettings[idx] = RockDetector.CreateInSettings(settings);
                         loaded[idx] = true;
                         numLoaded++;
@@ -375,7 +391,7 @@ namespace RockCollect.Stages
 //                            Console.WriteLine(string.Format("copying settings for tuned tile at col {0}, row {1} " +
 //                                                            "for tile at col {2}, row {3}{4}", nx, ny, x, y, grpMsg));
                             inSettings[idx] = inSettings[ni];
-                            string srcName = ReviewRocks.GetTileOutputName(ni, TilesHorizontal) + ".json";
+                            string srcName = GetTileOutputName(ni) + ".json";
                             string srcJSON = Path.Combine(GetDirectory(Dir.FinalOutput), srcName);
                             var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(srcJSON)).Data;
                             data["COPIED_FROM"] = srcName;
@@ -385,7 +401,7 @@ namespace RockCollect.Stages
                             data["TILE_ROW"] = y.ToString();
                             string dir = Path.Combine(GetDirectory(Dir.FinalOutput), "copied_settings");
                             if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-                            string dstName = ReviewRocks.GetTileOutputName(idx, TilesHorizontal) + ".json";
+                            string dstName = GetTileOutputName(idx) + ".json";
                             string dstJSON = Path.Combine(dir, dstName);
                             File.WriteAllText(dstJSON, JsonSerializer.Serialize(data, data.GetType(), writeJSONOpts));
                             nc++;
@@ -496,11 +512,6 @@ namespace RockCollect.Stages
             return true;
         }
 
-        int GetTileIndex(int col, int row)
-        {
-            return row * TilesHorizontal + col;
-        }
-
         void GetAvailableTilePixels(int pixelCol, int pixelRow, int imageWidth, int imageHeight,
                                     out int availableWidth, out int availableHeight)
         {
@@ -512,17 +523,6 @@ namespace RockCollect.Stages
         {
             pixelCol = tileCol * pixelsPerTile;
             pixelRow = tileRow * pixelsPerTile;
-        }
-
-        public static void GetTileAddress(int index, int numTilesHorizontal, out int tileCol, out int tileRow)
-        {
-            tileCol = index % numTilesHorizontal;
-            tileRow = index / numTilesHorizontal;
-        }
-
-        void GetTileAddress(int index, out int tileCol, out int tileRow)
-        {
-            GetTileAddress(index, TilesHorizontal, out tileCol, out tileRow);
         }
 
         public override bool Activate(Panel workArea, Form statusForm, bool forward)
@@ -575,34 +575,30 @@ namespace RockCollect.Stages
 
             ClearTile();
 
-            do
+            if (remainingTilesToTune == null || remainingTilesToTune.Count == 0)
             {
-                if (remainingTilesToTune == null || remainingTilesToTune.Count == 0)
+                return false;
+            }
+            
+            for (int counter = 0; counter < Skips; counter++)
+            {
+                if (skippedTiles == null)
+                {
+                    skippedTiles = new List<int>();
+                }
+                
+                skippedTiles.Add(remainingTilesToTune.First());
+                
+                remainingTilesToTune.RemoveAt(0);
+                if (remainingTilesToTune.Count == 0)
                 {
                     return false;
                 }
-
-                for (int counter = 0; counter < Skips; counter++)
-                {
-                    if (skippedTiles == null)
-                    {
-                        skippedTiles = new List<int>();
-                    }
-
-                    skippedTiles.Add(remainingTilesToTune.First());
-                    
-                    remainingTilesToTune.RemoveAt(0);
-                    if (remainingTilesToTune.Count == 0)
-                    {
-                        return false;
-                    }
-                }
-
-                ActiveTile = remainingTilesToTune.First();
-                remainingTilesToTune.RemoveAt(0);
-
-            } while (File.Exists(GetTileJSON(ActiveTile)));
-
+            }
+            
+            ActiveTile = remainingTilesToTune.First();
+            remainingTilesToTune.RemoveAt(0);
+            
             GetTileAddress(ActiveTile, out int tileCol, out int tileRow);
 
             GetTilePixels(tileCol, tileRow, TILESIZE, out int pixelCol, out int pixelRow);
