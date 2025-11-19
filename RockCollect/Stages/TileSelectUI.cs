@@ -28,7 +28,7 @@ namespace RockCollect.Stages
                     old.Dispose();
                 }
             };
-            textBoxStorageFolder.Text = stage.GetFinalOutputDirectory();
+            textBox.Text = "Storage folder: " + stage.GetFinalOutputDirectory();
         }
 
         private void RefreshInitialUI()

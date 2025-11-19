@@ -59,8 +59,7 @@
             this.labelTunedTiles = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
             this.buttonManualChooseTile = new System.Windows.Forms.Button();
-            this.labelStorageFolder = new System.Windows.Forms.Label();
-            this.textBoxStorageFolder = new System.Windows.Forms.TextBox();
+            this.textBox = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxTile)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSkips)).BeginInit();
@@ -385,26 +384,16 @@
             this.buttonManualChooseTile.UseVisualStyleBackColor = true;
             this.buttonManualChooseTile.Visible = false;
             // 
-            // labelStorageFolder
+            // textBox
             // 
-            this.labelStorageFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.labelStorageFolder.AutoSize = true;
-            this.labelStorageFolder.Location = new System.Drawing.Point(580, 396);
-            this.labelStorageFolder.Name = "labelStorageFolder";
-            this.labelStorageFolder.Size = new System.Drawing.Size(79, 13);
-            this.labelStorageFolder.TabIndex = 35;
-            this.labelStorageFolder.Text = "Storage Folder:";
-            // 
-            // textBoxStorageFolder
-            // 
-            this.textBoxStorageFolder.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBoxStorageFolder.Location = new System.Drawing.Point(577, 412);
-            this.textBoxStorageFolder.Multiline = true;
-            this.textBoxStorageFolder.Name = "textBoxStorageFolder";
-            this.textBoxStorageFolder.ReadOnly = true;
-            this.textBoxStorageFolder.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBoxStorageFolder.Size = new System.Drawing.Size(241, 75);
-            this.textBoxStorageFolder.TabIndex = 36;
+            this.textBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.textBox.Location = new System.Drawing.Point(577, 393);
+            this.textBox.Multiline = true;
+            this.textBox.Name = "textBox";
+            this.textBox.ReadOnly = true;
+            this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
+            this.textBox.Size = new System.Drawing.Size(270, 123);
+            this.textBox.TabIndex = 36;
             // 
             // label3
             // 
@@ -421,8 +410,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.label3);
-            this.Controls.Add(this.textBoxStorageFolder);
-            this.Controls.Add(this.labelStorageFolder);
+            this.Controls.Add(this.textBox);
             this.Controls.Add(this.buttonManualChooseTile);
             this.Controls.Add(this.labelTunedTiles);
             this.Controls.Add(this.label8);
@@ -498,8 +486,7 @@
         private System.Windows.Forms.Label labelTunedTiles;
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.Button buttonManualChooseTile;
-        private System.Windows.Forms.Label labelStorageFolder;
-        private System.Windows.Forms.TextBox textBoxStorageFolder;
+        private System.Windows.Forms.TextBox textBox;
         private System.Windows.Forms.Label label3;
     }
 }

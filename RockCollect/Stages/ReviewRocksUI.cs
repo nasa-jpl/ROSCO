@@ -13,6 +13,8 @@ namespace RockCollect.Stages
 {
     public partial class ReviewRocksUI : UserControl
     {
+        bool resetting = false;
+
         public ReviewRocks Stage;
 
         public ReviewRocksUI(ReviewRocks stage)
@@ -30,11 +32,16 @@ namespace RockCollect.Stages
             };
         }
 
-        private void InitializeTrackBarValues()
+        private void InitializeTrackBarValues(bool fromReset = false)
         {
+            resetting = true;
             Util.RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE,
                                  RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE,
                                  trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
+            if (!fromReset)
+            {
+                resetting = false;
+            }
         }
 
         Bitmap GetDetectionsImage()
@@ -145,6 +152,7 @@ namespace RockCollect.Stages
 
         private void trackBarConfidence_ValueChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             float confidence =
                 Util.RemapValues(trackBarConfidence.Value, trackBarConfidence.Minimum, trackBarConfidence.Maximum,
                                  RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE);
@@ -157,6 +165,7 @@ namespace RockCollect.Stages
 
         private void checkBoxConfidence_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             RockDetector.DetectionResults results = null;
             if (checkBoxConfidence.Checked)
             {
@@ -175,6 +184,7 @@ namespace RockCollect.Stages
 
         private void radioButtonYours_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonYours.Checked)
             {
                 Stage.SetConfidence(Stage.GetConfidence(), out RockDetector.DetectionResults results);
@@ -186,6 +196,7 @@ namespace RockCollect.Stages
 
         private void radioButtonTheirs_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonTheirs.Checked)
             {
                 RockDetector.DetectionResults theirs = Stage.GetComparisonDetections();
@@ -199,6 +210,7 @@ namespace RockCollect.Stages
 
         private void radioButtonOnlyYours_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonOnlyYours.Checked)
             {
                 this.trackBarConfidence.Enabled = false;
@@ -209,6 +221,7 @@ namespace RockCollect.Stages
 
         private void radioButtonOnlyTheirs_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonOnlyTheirs.Checked)
             {
                 this.trackBarConfidence.Enabled = false;
@@ -221,6 +234,7 @@ namespace RockCollect.Stages
 
         private void radioButtonBothIdentical_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonBothIdentical.Checked)
             {
                 this.trackBarConfidence.Enabled = false;
@@ -231,6 +245,7 @@ namespace RockCollect.Stages
 
         private void radioButtonBothDifferent_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonBothDifferent.Checked)
             {
                 this.trackBarConfidence.Enabled = false;
@@ -241,12 +256,11 @@ namespace RockCollect.Stages
 
         private void buttonReset_Click(object sender, EventArgs e)
         {
+            resetting = true;
             Stage.ResetToDefaults(out RockDetector.DetectionResults results);
-            labelConfidenceVal.Text = Stage.GetConfidence().ToString("F2");
+            InitializeTrackBarValues(fromReset: true);
             RefreshUI(results, Stage.GetComparisonDetections());
-            Util.RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE,
-                                 RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE,
-                                 trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
+            resetting = false;
         }
     }
 }

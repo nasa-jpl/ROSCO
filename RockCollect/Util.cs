@@ -19,7 +19,8 @@ namespace RockCollect
             if (stageVal == stageDisable)
             {
                 valLabel.Text = "Disabled";
-                
+
+                stageVal = Math.Max(stageMin, Math.Min(stageMax, stageVal));
                 trackBar.Value = (int)RemapValues(stageVal, stageMin, stageMax, trackBar.Minimum, trackBar.Maximum);
                 
                 if (trackBar.Enabled)

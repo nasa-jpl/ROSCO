@@ -12,6 +12,8 @@ namespace RockCollect.Stages
 {
     public partial class ImageThresholdUI : UserControl
     {
+        bool resetting = false;
+
         public ImageThreshold Stage;
 
         public ImageThresholdUI(ImageThreshold stage)
@@ -83,21 +85,11 @@ namespace RockCollect.Stages
 
         private void ImageThresholdUI_Load(object sender, EventArgs e)
         {
+            resetting = true;
             this.trackBarGamma.Value = GammaToTrackBarValue(Stage.GetGamma());
             this.trackBarThreshold.Value = Stage.GetThresholdOverride();
+            resetting = false;
             RefreshUI(true);
-        }
-
-        private void trackBarThreshold_ValueChanged(object sender, EventArgs e)
-        {
-            Stage.SetThresholdOverride(trackBarThreshold.Value);
-            RefreshUI();
-        }
-
-        private void trackBarGamma_ValueChanged(object sender, EventArgs e)
-        {
-            Stage.SetGamma(TrackBarValueToGamma(trackBarGamma.Value));
-            RefreshUI();
         }
 
         private void ImageThresholdUI_VisibleChanged(object sender, EventArgs e)
@@ -108,8 +100,23 @@ namespace RockCollect.Stages
             }
         }
 
+        private void trackBarThreshold_ValueChanged(object sender, EventArgs e)
+        {
+            if (resetting) return;
+            Stage.SetThresholdOverride(trackBarThreshold.Value);
+            RefreshUI();
+        }
+
+        private void trackBarGamma_ValueChanged(object sender, EventArgs e)
+        {
+            if (resetting) return;
+            Stage.SetGamma(TrackBarValueToGamma(trackBarGamma.Value));
+            RefreshUI();
+        }
+
         private void radioButtonInput_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if(radioButtonInput.Checked)
             {
                 RefreshUI();
@@ -118,6 +125,7 @@ namespace RockCollect.Stages
 
         private void radioButtonGamma_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonGamma.Checked)
             {
                 RefreshUI();
@@ -126,6 +134,7 @@ namespace RockCollect.Stages
 
         private void radioButtonGammaThresh_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonGammaThresh.Checked)
             {
                 RefreshUI();
@@ -134,6 +143,7 @@ namespace RockCollect.Stages
 
         private void radioButtonFinalOverlay_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonFinalOverlay.Checked)
             {
                 RefreshUI();
@@ -142,16 +152,19 @@ namespace RockCollect.Stages
 
         private void trackBarThreshold_ValueChanged_1(object sender, EventArgs e)
         {
+            if (resetting) return;
             Stage.SetThresholdOverride(trackBarThreshold.Value);
             RefreshUI();
         }
 
         private void buttonReset_Click(object sender, EventArgs e)
         {
+            resetting = true;
             Stage.ResetToDefaults();
-            RefreshUI();
             trackBarGamma.Value = GammaToTrackBarValue(Stage.GetGamma());
             trackBarThreshold.Value = Stage.GetThresholdOverride();
+            RefreshUI(true);
+            resetting = false;
         }
     }
 }

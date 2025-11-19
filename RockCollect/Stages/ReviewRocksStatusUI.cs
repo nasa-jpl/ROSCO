@@ -133,6 +133,8 @@ namespace RockCollect.Stages
         {
             lock (this.dataGridView1)
             {
+                if (this.chartCFA == null) return;
+
                 ActiveResults = results;
                 PassiveResults = passiveResults;
                 //sourceBitmap = null;

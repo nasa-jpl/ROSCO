@@ -11,10 +11,12 @@ using RockCollect;
 
 namespace RockCollect.Stages
 {
-
     public partial class RefineShadowsUI : UserControl
     {
+        bool resetting = false;
+
         public RefineShadows Stage;
+
         public RefineShadowsUI(RefineShadows stage)
         {
             InitializeComponent();
@@ -45,8 +47,9 @@ namespace RockCollect.Stages
             shadowstatusUI.UpdateDataGrid(results);
         }
 
-        private void InitializeTrackBarValues()
+        private void InitializeTrackBarValues(bool fromReset = false)
         {
+            resetting = true;
             Util.RefreshTrackbar(Stage.GetShadowAspect(), RockDetector.MIN_VALID_ASPECT, RockDetector.MAX_VALID_ASPECT,
                                  RockDetector.DISABLE_ASPECT, trackBarAspect, labelAspectVal, checkBoxAspect);
             Util.RefreshTrackbar(Stage.GetMinShadowArea(), RockDetector.MIN_VALID_MIN_SHADOW_AREA,
@@ -60,6 +63,10 @@ namespace RockCollect.Stages
                                  labelGradientVal, checkBoxGradient);
             Util.RefreshTrackbar(Stage.GetMinShadowSplit(), RockDetector.MIN_VALID_SPLIT, RockDetector.MAX_VALID_SPLIT,
                                  RockDetector.DISABLE_SPLIT, trackBarSplit, labelSplitVal, checkBoxSplit);
+            if (!fromReset)
+            {
+                resetting = false;
+            }
         }
 
         internal void SetSelectedShadowsUI(int label, RockDetector.DetectionResults results)
@@ -90,7 +97,6 @@ namespace RockCollect.Stages
         private void RefineShadowsUI_Load(object sender, EventArgs e)
         {
             InitializeTrackBarValues();
-
             Stage.SetMinShadowArea(Stage.GetMinShadowArea(), out RockDetector.DetectionResults results);
             RefreshUI(results);
         }
@@ -107,6 +113,8 @@ namespace RockCollect.Stages
 
         private void trackBarMinArea_ValueChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("trackBarMinArea: " + trackBarMinArea.Value);
             float minShadowArea =
                 Util.RemapValues(trackBarMinArea.Value, trackBarMinArea.Minimum, trackBarMinArea.Maximum,
                                  RockDetector.MIN_VALID_MIN_SHADOW_AREA, RockDetector.MAX_VALID_MIN_SHADOW_AREA);
@@ -119,6 +127,8 @@ namespace RockCollect.Stages
 
         private void trackBarMaxArea_ValueChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("trackBarMaxArea: " + trackBarMaxArea.Value);
             float maxShadowArea =
                 Util.RemapValues(trackBarMaxArea.Value, trackBarMaxArea.Minimum, trackBarMaxArea.Maximum,
                                  RockDetector.MIN_VALID_MAX_SHADOW_AREA, RockDetector.MAX_VALID_MAX_SHADOW_AREA);
@@ -132,6 +142,8 @@ namespace RockCollect.Stages
 
         private void trackBarAspect_ValueChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("trackBarAspect: " + trackBarAspect.Value);
             float aspect = Util.RemapValues(trackBarAspect.Value, trackBarAspect.Minimum, trackBarAspect.Maximum,
                                             RockDetector.MIN_VALID_ASPECT, RockDetector.MAX_VALID_ASPECT);
             
@@ -143,6 +155,8 @@ namespace RockCollect.Stages
 
         private void trackBarGradient_ValueChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("trackBarGradient: " + trackBarGradient.Value);
             float gradient =
                 Util.RemapValues(trackBarGradient.Value, trackBarGradient.Minimum, trackBarGradient.Maximum,
                                  RockDetector.MIN_VALID_MEAN_GRADIENT, RockDetector.MAX_VALID_MEAN_GRADIENT);
@@ -156,6 +170,8 @@ namespace RockCollect.Stages
 
         private void trackBarSplit_ValueChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("trackBarSplit: " + trackBarSplit.Value);
             float split = Util.RemapValues(trackBarSplit.Value, trackBarSplit.Minimum, trackBarSplit.Maximum,
                                            RockDetector.MIN_VALID_SPLIT, RockDetector.MAX_VALID_SPLIT);
 
@@ -167,6 +183,8 @@ namespace RockCollect.Stages
 
         private void checkBoxMaxArea_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("checkBoxMaxArea: " + checkBoxMaxArea.Checked);
             RockDetector.DetectionResults results = null;
             if (checkBoxMaxArea.Checked)
             {
@@ -184,6 +202,8 @@ namespace RockCollect.Stages
 
         private void checkBoxAspect_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("checkBoxAspect: " + checkBoxAspect.Checked);
             RockDetector.DetectionResults results = null;
             if (checkBoxAspect.Checked)
             {
@@ -202,6 +222,8 @@ namespace RockCollect.Stages
 
         private void checkBoxGradient_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("checkBoxGradient: " + checkBoxGradient.Checked);
             RockDetector.DetectionResults results = null;
             if (checkBoxGradient.Checked)
             {
@@ -219,6 +241,8 @@ namespace RockCollect.Stages
 
         private void checkBoxSplit_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
+            //Console.WriteLine("checkBoxSplit: " + checkBoxSplit.Checked);
             RockDetector.DetectionResults results = null;
             if (checkBoxSplit.Checked)
             {
@@ -236,16 +260,13 @@ namespace RockCollect.Stages
 
         private void buttonReset_Click(object sender, EventArgs e)
         {
+            //Console.WriteLine("reset start");
+            resetting = true;
             Stage.ResetToDefaults(out RockDetector.DetectionResults results);
-
+            InitializeTrackBarValues(fromReset: true);
             RefreshUI(results);
-
-            checkBoxMaxArea.Checked = Stage.GetMaxShadowArea() != RockDetector.DISABLE_MAX_SHADOW_AREA;
-            checkBoxAspect.Checked = Stage.GetShadowAspect() != RockDetector.DISABLE_ASPECT;
-            checkBoxGradient.Checked = Stage.GetMeanGradient() != RockDetector.DISABLE_GRADIENT;
-            checkBoxSplit.Checked = Stage.GetMinShadowSplit() != RockDetector.DISABLE_SPLIT;
-
-            InitializeTrackBarValues();
+            resetting = false;
+            //Console.WriteLine("reset end");
         }
     }
 }
