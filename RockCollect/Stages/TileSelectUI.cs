@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using RockCollect;
 
 namespace RockCollect.Stages
 {
@@ -103,10 +104,42 @@ namespace RockCollect.Stages
             RefreshSelectedUI();
         }
 
+        private void buttonManualChooseTile_Click(object sender, EventArgs e)
+        {
+            using (ChooseTile dialog = new ChooseTile())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    //TODO
+                }
+            }
+        }
+
         private void buttonAutoChooseTile_Click(object sender, EventArgs e)
         {
             Stage.AutoChooseTile();
             RefreshSelectedUI();
+        }
+
+        private void buttonCopySettingsManual_Click(object sender, EventArgs e)
+        {
+            using (ChooseTile dialog = new ChooseTile())
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    //TODO
+                }
+            }
+        }
+
+        private void buttonCopySettingsFromClosest_Click(object sender, EventArgs e)
+        {
+            //TODO
+        }
+
+        private void buttonCopySettingsFromMostRecent_Click(object sender, EventArgs e)
+        {
+            //TODO
         }
 
         private void TileSelectUI_VisibleChanged(object sender, EventArgs e)

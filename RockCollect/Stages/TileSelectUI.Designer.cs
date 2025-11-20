@@ -61,6 +61,10 @@
             this.buttonManualChooseTile = new System.Windows.Forms.Button();
             this.textBox = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
+            this.buttonCopySettingsManual = new System.Windows.Forms.Button();
+            this.buttonCopySettingsFromClosest = new System.Windows.Forms.Button();
+            this.buttonCopySettingsFromMostRecent = new System.Windows.Forms.Button();
+            this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxTile)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSkips)).BeginInit();
             this.SuspendLayout();
@@ -91,7 +95,7 @@
             // buttonAutoChooseTile
             // 
             this.buttonAutoChooseTile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonAutoChooseTile.Location = new System.Drawing.Point(599, 201);
+            this.buttonAutoChooseTile.Location = new System.Drawing.Point(609, 201);
             this.buttonAutoChooseTile.Name = "buttonAutoChooseTile";
             this.buttonAutoChooseTile.Size = new System.Drawing.Size(129, 23);
             this.buttonAutoChooseTile.TabIndex = 2;
@@ -190,7 +194,7 @@
             this.checkBoxDropOuts.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBoxDropOuts.AutoSize = true;
             this.checkBoxDropOuts.Enabled = false;
-            this.checkBoxDropOuts.Location = new System.Drawing.Point(583, 324);
+            this.checkBoxDropOuts.Location = new System.Drawing.Point(583, 363);
             this.checkBoxDropOuts.Name = "checkBoxDropOuts";
             this.checkBoxDropOuts.Size = new System.Drawing.Size(95, 17);
             this.checkBoxDropOuts.TabIndex = 12;
@@ -202,7 +206,7 @@
             this.checkBoxNoisy.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBoxNoisy.AutoSize = true;
             this.checkBoxNoisy.Enabled = false;
-            this.checkBoxNoisy.Location = new System.Drawing.Point(583, 347);
+            this.checkBoxNoisy.Location = new System.Drawing.Point(583, 386);
             this.checkBoxNoisy.Name = "checkBoxNoisy";
             this.checkBoxNoisy.Size = new System.Drawing.Size(84, 17);
             this.checkBoxNoisy.TabIndex = 13;
@@ -214,7 +218,7 @@
             this.checkBoxVerticalStripes.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.checkBoxVerticalStripes.AutoSize = true;
             this.checkBoxVerticalStripes.Enabled = false;
-            this.checkBoxVerticalStripes.Location = new System.Drawing.Point(582, 370);
+            this.checkBoxVerticalStripes.Location = new System.Drawing.Point(582, 409);
             this.checkBoxVerticalStripes.Name = "checkBoxVerticalStripes";
             this.checkBoxVerticalStripes.Size = new System.Drawing.Size(96, 17);
             this.checkBoxVerticalStripes.TabIndex = 14;
@@ -226,7 +230,7 @@
             this.labelQuality.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelQuality.AutoSize = true;
             this.labelQuality.Enabled = false;
-            this.labelQuality.Location = new System.Drawing.Point(580, 305);
+            this.labelQuality.Location = new System.Drawing.Point(580, 344);
             this.labelQuality.Name = "labelQuality";
             this.labelQuality.Size = new System.Drawing.Size(39, 13);
             this.labelQuality.TabIndex = 15;
@@ -238,9 +242,9 @@
             this.label1.AutoSize = true;
             this.label1.Location = new System.Drawing.Point(580, 259);
             this.label1.Name = "label1";
-            this.label1.Size = new System.Drawing.Size(129, 13);
+            this.label1.Size = new System.Drawing.Size(131, 13);
             this.label1.TabIndex = 16;
-            this.label1.Text = "Tile Pixels (Column, Row):";
+            this.label1.Text = "Tile Pixels (Width, Height):";
             // 
             // labelSelectedTilePixelsVal
             // 
@@ -254,7 +258,7 @@
             // numericUpDownSkips
             // 
             this.numericUpDownSkips.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.numericUpDownSkips.Location = new System.Drawing.Point(760, 204);
+            this.numericUpDownSkips.Location = new System.Drawing.Point(780, 204);
             this.numericUpDownSkips.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -269,7 +273,7 @@
             // 
             this.label2.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(731, 205);
+            this.label2.Location = new System.Drawing.Point(751, 205);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(26, 13);
             this.label2.TabIndex = 19;
@@ -339,7 +343,7 @@
             // 
             this.labelRunnableTiles.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.labelRunnableTiles.AutoSize = true;
-            this.labelRunnableTiles.Location = new System.Drawing.Point(668, 519);
+            this.labelRunnableTiles.Location = new System.Drawing.Point(668, 526);
             this.labelRunnableTiles.Name = "labelRunnableTiles";
             this.labelRunnableTiles.Size = new System.Drawing.Size(0, 13);
             this.labelRunnableTiles.TabIndex = 29;
@@ -348,7 +352,7 @@
             // 
             this.label6.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label6.AutoSize = true;
-            this.label6.Location = new System.Drawing.Point(580, 519);
+            this.label6.Location = new System.Drawing.Point(580, 526);
             this.label6.Name = "label6";
             this.label6.Size = new System.Drawing.Size(81, 13);
             this.label6.TabIndex = 28;
@@ -378,37 +382,84 @@
             this.buttonManualChooseTile.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonManualChooseTile.Location = new System.Drawing.Point(579, 172);
             this.buttonManualChooseTile.Name = "buttonManualChooseTile";
-            this.buttonManualChooseTile.Size = new System.Drawing.Size(239, 23);
+            this.buttonManualChooseTile.Size = new System.Drawing.Size(256, 23);
             this.buttonManualChooseTile.TabIndex = 34;
-            this.buttonManualChooseTile.Text = "Manually Choose Tile";
+            this.buttonManualChooseTile.Text = "Manually Choose Tile (or Re-Tune a Tile)...";
             this.buttonManualChooseTile.UseVisualStyleBackColor = true;
-            this.buttonManualChooseTile.Visible = false;
+            this.buttonManualChooseTile.Click += new System.EventHandler(this.buttonManualChooseTile_Click);
             // 
             // textBox
             // 
             this.textBox.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.textBox.Location = new System.Drawing.Point(577, 393);
+            this.textBox.Location = new System.Drawing.Point(577, 430);
             this.textBox.Multiline = true;
             this.textBox.Name = "textBox";
             this.textBox.ReadOnly = true;
             this.textBox.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
-            this.textBox.Size = new System.Drawing.Size(270, 123);
+            this.textBox.Size = new System.Drawing.Size(270, 86);
             this.textBox.TabIndex = 36;
             // 
             // label3
             // 
             this.label3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.label3.AutoSize = true;
-            this.label3.Location = new System.Drawing.Point(578, 206);
+            this.label3.Location = new System.Drawing.Point(582, 206);
             this.label3.Name = "label3";
             this.label3.Size = new System.Drawing.Size(21, 13);
             this.label3.TabIndex = 37;
             this.label3.Text = "Or:";
             // 
+            // buttonCopySettingsManual
+            // 
+            this.buttonCopySettingsManual.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonCopySettingsManual.Location = new System.Drawing.Point(577, 297);
+            this.buttonCopySettingsManual.Name = "buttonCopySettingsManual";
+            this.buttonCopySettingsManual.Size = new System.Drawing.Size(258, 23);
+            this.buttonCopySettingsManual.TabIndex = 38;
+            this.buttonCopySettingsManual.Text = "Copy Settings From Another Tile...";
+            this.buttonCopySettingsManual.UseVisualStyleBackColor = true;
+            this.buttonCopySettingsManual.Click += new System.EventHandler(this.buttonCopySettingsManual_Click);
+            // 
+            // buttonCopySettingsFromClosest
+            // 
+            this.buttonCopySettingsFromClosest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonCopySettingsFromClosest.Location = new System.Drawing.Point(652, 320);
+            this.buttonCopySettingsFromClosest.Name = "buttonCopySettingsFromClosest";
+            this.buttonCopySettingsFromClosest.Size = new System.Drawing.Size(72, 23);
+            this.buttonCopySettingsFromClosest.TabIndex = 39;
+            this.buttonCopySettingsFromClosest.Text = "Closest Tile";
+            this.buttonCopySettingsFromClosest.UseVisualStyleBackColor = true;
+            this.buttonCopySettingsFromClosest.Click += new System.EventHandler(this.buttonCopySettingsFromClosest_Click);
+            // 
+            // buttonCopySettingsFromMostRecent
+            // 
+            this.buttonCopySettingsFromMostRecent.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonCopySettingsFromMostRecent.Location = new System.Drawing.Point(730, 320);
+            this.buttonCopySettingsFromMostRecent.Name = "buttonCopySettingsFromMostRecent";
+            this.buttonCopySettingsFromMostRecent.Size = new System.Drawing.Size(105, 23);
+            this.buttonCopySettingsFromMostRecent.TabIndex = 40;
+            this.buttonCopySettingsFromMostRecent.Text = "Most Recent Tile";
+            this.buttonCopySettingsFromMostRecent.UseVisualStyleBackColor = true;
+            this.buttonCopySettingsFromMostRecent.Click += new System.EventHandler(this.buttonCopySettingsFromMostRecent_Click);
+            // 
+            // label4
+            // 
+            this.label4.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.label4.AutoSize = true;
+            this.label4.Location = new System.Drawing.Point(579, 325);
+            this.label4.Name = "label4";
+            this.label4.Size = new System.Drawing.Size(70, 13);
+            this.label4.TabIndex = 41;
+            this.label4.Text = "Or: copy from";
+            // 
             // TileSelectUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.label4);
+            this.Controls.Add(this.buttonCopySettingsFromMostRecent);
+            this.Controls.Add(this.buttonCopySettingsFromClosest);
+            this.Controls.Add(this.buttonCopySettingsManual);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.textBox);
             this.Controls.Add(this.buttonManualChooseTile);
@@ -488,5 +539,9 @@
         private System.Windows.Forms.Button buttonManualChooseTile;
         private System.Windows.Forms.TextBox textBox;
         private System.Windows.Forms.Label label3;
+        private System.Windows.Forms.Button buttonCopySettingsManual;
+        private System.Windows.Forms.Button buttonCopySettingsFromClosest;
+        private System.Windows.Forms.Button buttonCopySettingsFromMostRecent;
+        private System.Windows.Forms.Label label4;
     }
 }

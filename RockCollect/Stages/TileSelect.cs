@@ -94,6 +94,11 @@ namespace RockCollect.Stages
             }
             
             remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
+
+            if (skippedTiles != null)
+            {
+                skippedTiles = skippedTiles.Where(tile => !alreadyTuned.Contains(tile)).ToList();
+            }
             
             if (inData.Data.ContainsKey("SHAPE_FILE") && !string.IsNullOrEmpty(inData.Data["SHAPE_FILE"]) &&
                 TileShapeData == null)
