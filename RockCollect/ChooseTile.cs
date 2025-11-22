@@ -5,16 +5,26 @@ using System.Data;
 using System.Drawing;
 using System.Linq;
 using System.Text;
+using System.IO;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using RockCollect.Stages;
 
 namespace RockCollect
 {
     public partial class ChooseTile : Form
     {
-        public ChooseTile()
+        TileSelect Stage;
+        DateTime? recent;
+
+        public ChooseTile(TileSelect stage)
         {
+            Stage = stage;
             InitializeComponent();
+            numericUpDownTileCol.Minimum = 0;
+            numericUpDownTileCol.Maximum = Stage.GetNumTilesHorizontal() - 1;
+            numericUpDownTileRow.Minimum = 0;
+            numericUpDownTileRow.Maximum = Stage.GetNumTilesVertical() - 1;
         }
 
         public int GetTileCol()
@@ -39,19 +49,14 @@ namespace RockCollect
 
         private void buttonMostRecent_Click(object sender, EventArgs e)
         {
-            //TODO
-        }
-
-        private void numericUpDownTileCol_ValueChanged(object sender, EventArgs e)
-        {
-            int col = (int)numericUpDownTileCol.Value;
-            //TODO enforce range
-        }
-
-        private void numericUpDownTileRow_ValueChanged(object sender, EventArgs e)
-        {
-            int row = (int)numericUpDownTileRow.Value;
-            //TODO enforce range
+            int idx = Stage.GetMostRecentlyTunedTile(recent);
+            if (idx >= 0)
+            {
+                Stage.GetTileAddress(idx, out int x, out int y);
+                numericUpDownTileCol.Value = x;
+                numericUpDownTileRow.Value = y;
+                recent = File.GetLastWriteTimeUtc(Stage.GetTileJSON(idx));
+            }
         }
     }
 }

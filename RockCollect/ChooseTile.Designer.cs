@@ -61,7 +61,6 @@
             this.numericUpDownTileCol.Name = "numericUpDownTileCol";
             this.numericUpDownTileCol.Size = new System.Drawing.Size(55, 20);
             this.numericUpDownTileCol.TabIndex = 39;
-            this.numericUpDownTileCol.ValueChanged += new System.EventHandler(this.numericUpDownTileCol_ValueChanged);
             // 
             // label1
             // 
@@ -83,7 +82,6 @@
             this.numericUpDownTileRow.Name = "numericUpDownTileRow";
             this.numericUpDownTileRow.Size = new System.Drawing.Size(55, 20);
             this.numericUpDownTileRow.TabIndex = 41;
-            this.numericUpDownTileRow.ValueChanged += new System.EventHandler(this.numericUpDownTileRow_ValueChanged);
             // 
             // labelTileColMinMax
             // 

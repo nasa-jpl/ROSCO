@@ -209,23 +209,23 @@ namespace RockCollect.Stages
             return base.Deactivate(forward);
         }
 
-        void GetTileAddress(int tileIndex, out int tileCol, out int tileRow)
+        public void GetTileAddress(int tileIndex, out int tileCol, out int tileRow)
         {
             GetTileAddress(tileIndex, TilesHorizontal, out tileCol, out tileRow);
         }
 
-        int GetTileIndex(int col, int row)
+        public int GetTileIndex(int col, int row)
         {
             return GetTileIndex(col, row, TilesHorizontal);
         }
 
-        string GetTileOutputName(int tileIndex)
+        public string GetTileOutputName(int tileIndex)
         {
             GetTileAddress(tileIndex, TilesHorizontal, out int tileCol, out int tileRow);
             return GetTileOutputName(tileCol, tileRow);
         }
 
-        string GetTileJSON(int tileIndex)
+        public string GetTileJSON(int tileIndex)
         {
             GetTileAddress(tileIndex, TilesHorizontal, out int tileCol, out int tileRow);
             return GetTileJSON(tileCol, tileRow);
@@ -258,6 +258,100 @@ namespace RockCollect.Stages
                 }
             }
             return n;
+        }
+
+        public int GetMostRecentlyTunedTile(DateTime? before = null)
+        {
+            DateTime? mostRecent = null;
+            int ret = -1;
+            for (int y = 0; y < TilesVertical; y++)
+            {
+                for (int x = 0; x < TilesHorizontal; x++)
+                {
+                    string file = GetTileJSON(x, y);
+                    if (File.Exists(file))
+                    {
+                        DateTime dt = File.GetLastWriteTimeUtc(file);
+                        if ((mostRecent == null || dt > mostRecent) && (before == null || dt < before))
+                        {
+                            mostRecent = dt;
+                            ret = GetTileIndex(x, y);
+                        }
+                    }
+                }
+            }
+            return ret;
+        }
+
+        public void CopySettings(int fromIndex, int toIndex, string subdir = null)
+        {
+            GetTileAddress(toIndex, out int x, out int y);
+            string srcName = GetTileOutputName(fromIndex) + ".json";
+            string srcJSON = GetTileJSON(fromIndex);
+            var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(srcJSON)).Data;
+            data["COPIED_FROM"] = srcName;
+            data.Remove("TILE_PATH");
+            data["TILE_INDEX"] = toIndex.ToString();
+            data["TILE_COL"] = x.ToString();
+            data["TILE_ROW"] = y.ToString();
+            string dstJSON = GetTileJSON(toIndex);
+            if (!string.IsNullOrEmpty(subdir))
+            {
+                string dir = Path.Combine(GetDirectory(Dir.FinalOutput), subdir);
+                if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                string dstName = GetTileOutputName(toIndex) + ".json";
+                dstJSON = Path.Combine(dir, dstName);
+            }
+            var writeJSONOpts = new JsonSerializerOptions { WriteIndented = true };
+            File.WriteAllText(dstJSON, JsonSerializer.Serialize(data, data.GetType(), writeJSONOpts));
+        }
+
+        public int GetClosestTunedTile(int tileIndex, Func<int, bool> loaded)
+        {
+            GetTileAddress(tileIndex, out int x, out int y);
+
+            var tsd = TileShapeData;
+
+            //search in a ring of increasing radius until a tuned tile is found
+            string grp = tsd != null && tsd[tileIndex] != null ? tsd[tileIndex].grp : null;
+
+            int maxRadius = Math.Max(x, y);
+            maxRadius = Math.Max(maxRadius, TilesHorizontal - x - 1);
+            maxRadius = Math.Max(maxRadius, TilesVertical - y - 1);
+
+//            string grpMsg = grp != null ? (" in shape file group \"" + grp + "\"") : "";
+//            Console.WriteLine(string.Format("searching for tuned neighbor of tile at col {0}, row {1}, " +
+//                                            "max radius {2}{3}", x, y, maxRadius, grpMsg));
+            int ni = -1;
+            for (int radius = 1; radius <= maxRadius && ni < 0; radius++)
+            {
+                //top and bottom rows of ring
+                for (int ny = y - radius; ny <= y + radius && ni < 0; ny += 2 * radius)
+                {
+                    if (ny < 0 || ny >= TilesVertical) continue;
+                    for (int nx = x - radius; nx <= x + radius && ni < 0 ; nx += 1)
+                    {
+                        if (nx < 0 || nx >= TilesHorizontal) continue;
+                        ni = GetTileIndex(nx, ny);
+                        if (!loaded(ni)) ni = -1;
+                        else if (tsd != null && (tsd[ni] == null || tsd[ni].grp != grp)) ni = -1;
+                    }
+                }
+                //left and right cols of ring
+                for (int nx = x - radius; nx <= x + radius && ni < 0; nx += 2 * radius)
+                {
+                    if (nx < 0 || nx >= TilesHorizontal) continue;
+                    for (int ny = y - radius + 1; ny < y + radius && ni < 0; ny += 1)
+                    {
+                        if (ny < 0 || ny >= TilesVertical) continue;
+                        ni = GetTileIndex(nx, ny);
+                        if (!loaded(ni)) ni = -1;
+                        else if (tsd != null && (tsd[ni] == null || tsd[ni].grp != grp)) ni = -1;
+                    }
+                }
+            }
+
+            return ni;
         }
 
         internal void SaveRocklist(string fileName)
@@ -354,61 +448,16 @@ namespace RockCollect.Stages
                     }
                     if (!loaded[idx])
                     {
-                        //search in a ring of increasing radius until a tuned tile is found
                         string grp = tsd != null && tsd[idx] != null ? tsd[idx].grp : null;
                         string grpMsg = grp != null ? (" in shape file group \"" + grp + "\"") : "";
-                        int maxRadius = Math.Max(x, y);
-                        maxRadius = Math.Max(maxRadius, TilesHorizontal - x - 1);
-                        maxRadius = Math.Max(maxRadius, TilesVertical - y - 1);
-//                        Console.WriteLine(string.Format("searching for tuned neighbor of tile at col {0}, row {1}, " +
-//                                                        "max radius {2}{3}", x, y, maxRadius, grpMsg));
-                        int ni = -1;
-                        for (int radius = 1; radius <= maxRadius && ni < 0; radius++)
-                        {
-                            //top and bottom rows of ring
-                            for (int ny = y - radius; ny <= y + radius && ni < 0; ny += 2 * radius)
-                            {
-                                if (ny < 0 || ny >= TilesVertical) continue;
-                                for (int nx = x - radius; nx <= x + radius && ni < 0 ; nx += 1)
-                                {
-                                    if (nx < 0 || nx >= TilesHorizontal) continue;
-                                    ni = GetTileIndex(nx, ny);
-                                    if (!loaded[ni]) ni = -1;
-                                    else if (tsd != null && (tsd[ni] == null || tsd[ni].grp != grp)) ni = -1;
-                                }
-                            }
-                            //left and right cols of ring
-                            for (int nx = x - radius; nx <= x + radius && ni < 0; nx += 2 * radius)
-                            {
-                                if (nx < 0 || nx >= TilesHorizontal) continue;
-                                for (int ny = y - radius + 1; ny < y + radius && ni < 0; ny += 1)
-                                {
-                                    if (ny < 0 || ny >= TilesVertical) continue;
-                                    ni = GetTileIndex(nx, ny);
-                                    if (!loaded[ni]) ni = -1;
-                                    else if (tsd != null && (tsd[ni] == null || tsd[ni].grp != grp)) ni = -1;
-                                }
-                            }
-                        }
+                        int ni = GetClosestTunedTile(idx, (i) => loaded[i]);
                         if (ni >= 0)
                         {
                             GetTileAddress(ni, out int nx, out int ny);
 //                            Console.WriteLine(string.Format("copying settings for tuned tile at col {0}, row {1} " +
 //                                                            "for tile at col {2}, row {3}{4}", nx, ny, x, y, grpMsg));
                             inSettings[idx] = inSettings[ni];
-                            string srcName = GetTileOutputName(ni) + ".json";
-                            string srcJSON = Path.Combine(GetDirectory(Dir.FinalOutput), srcName);
-                            var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(srcJSON)).Data;
-                            data["COPIED_FROM"] = srcName;
-                            data.Remove("TILE_PATH");
-                            data["TILE_INDEX"] = idx.ToString();
-                            data["TILE_COL"] = x.ToString();
-                            data["TILE_ROW"] = y.ToString();
-                            string dir = Path.Combine(GetDirectory(Dir.FinalOutput), "copied_settings");
-                            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
-                            string dstName = GetTileOutputName(idx) + ".json";
-                            string dstJSON = Path.Combine(dir, dstName);
-                            File.WriteAllText(dstJSON, JsonSerializer.Serialize(data, data.GetType(), writeJSONOpts));
+                            CopySettings(ni, idx, "copied_settings");
                             nc++;
                         }
                         else
@@ -482,6 +531,21 @@ namespace RockCollect.Stages
         {
             widthPixels = WidthPixels;
             heightPixels = HeightPixels;
+        }
+
+        public int GetTilesHorizontal()
+        {
+            return TilesHorizontal;
+        }
+
+        public int GetTilesVertical()
+        {
+            return TilesVertical;
+        }
+
+        public int GetActiveTile()
+        {
+            return ActiveTile;
         }
 
         public string GetActiveTileGroup()
@@ -606,6 +670,13 @@ namespace RockCollect.Stages
             
             GetTileAddress(ActiveTile, out int tileCol, out int tileRow);
 
+            ChooseTile(tileCol, tileRow);
+
+            return true;
+        }
+
+        public void ChooseTile(int tileCol, int tileRow)
+        {
             GetTilePixels(tileCol, tileRow, TILESIZE, out int pixelCol, out int pixelRow);
             GetAvailableTilePixels(pixelCol, pixelRow, this.WidthPixels, this.HeightPixels,
                                    out int availableWidth, out int availableHeight);
@@ -615,13 +686,14 @@ namespace RockCollect.Stages
 
             ActiveImage = GDALSerializer.Load(ImagePath, rect.X, rect.Y, rect.Width, rect.Height);
 
-            return true;
+            (Control as TileSelectUI).EnableCopySettings(true);
         }
 
         public void ClearTile()
         {
             ActiveImage = null;
             ActiveTile = -1;
+            (Control as TileSelectUI).EnableCopySettings(false);
         }
 
         public void ParseShapeFile(string shapeFilePath)

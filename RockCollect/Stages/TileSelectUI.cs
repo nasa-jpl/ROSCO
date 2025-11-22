@@ -5,6 +5,7 @@ using System.Drawing;
 using System.Data;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
@@ -53,6 +54,8 @@ namespace RockCollect.Stages
             this.labelGroupVal.Text = "";
 
             this.labelRunnableTiles.Text = Stage.CountRunnableTiles().ToString();
+
+            EnableCopySettings(false);
         }
 
         private void RefreshSelectedUI()
@@ -106,11 +109,11 @@ namespace RockCollect.Stages
 
         private void buttonManualChooseTile_Click(object sender, EventArgs e)
         {
-            using (ChooseTile dialog = new ChooseTile())
+            using (ChooseTile dialog = new ChooseTile(Stage))
             {
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    //TODO
+                    Stage.ChooseTile(dialog.GetTileCol(), dialog.GetTileRow());
                 }
             }
         }
@@ -121,25 +124,78 @@ namespace RockCollect.Stages
             RefreshSelectedUI();
         }
 
+        public void EnableCopySettings(bool enable)
+        {
+            buttonCopySettingsManual.Enabled = enable;
+            buttonCopySettingsClosest.Enabled = enable;
+            buttonCopySettingsMostRecent.Enabled = enable;
+        }
+
         private void buttonCopySettingsManual_Click(object sender, EventArgs e)
         {
-            using (ChooseTile dialog = new ChooseTile())
+            int activeTile = Stage.GetActiveTile();
+            if (activeTile < 0) return;
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                if (dialog.ShowDialog() == DialogResult.OK)
+                openFileDialog.InitialDirectory = Directory.GetCurrentDirectory();
+                openFileDialog.Filter = "Tile (Tile_*_*.json)|Tile_*_*.json|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 1;
+                openFileDialog.RestoreDirectory = false;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    //TODO
+                    string pattern = @"Tile_(\d+)_(\d+).json$";
+                    Match match = Regex.Match(openFileDialog.FileName, pattern);
+                    if (match.Success)
+                    {
+                        int x = int.Parse(match.Groups[1].Value);
+                        int y = int.Parse(match.Groups[2].Value);
+                        if ((x >= 0 && x < Stage.GetTilesHorizontal()) && (y >=0 && y < Stage.GetTilesVertical()))
+                        {
+                            Stage.CopySettings(Stage.GetTileIndex(x, y), activeTile);
+                        }
+                        else
+                        {
+                            MessageBox.Show(
+                                string.Format("Invalid tile (col={0}, row={1}), must be in range (0, 0) to ({2}, {3})",
+                                              x, y, Stage.GetTilesHorizontal() - 1, Stage.GetTilesVertical() - 1),
+                                "Error",
+                                MessageBoxButtons.OK,
+                                MessageBoxIcon.Error);
+                        }
+                    }
+                    else
+                    {
+                        MessageBox.Show(
+                            string.Format("Invalid tile filename \"{0}\", must be in the form Tile_######_######.json",
+                                          Path.GetFileName(openFileDialog.FileName)),
+                            "Error",
+                            MessageBoxButtons.OK,
+                            MessageBoxIcon.Error);
+                    }
                 }
             }
         }
 
         private void buttonCopySettingsFromClosest_Click(object sender, EventArgs e)
         {
-            //TODO
+            if (Stage.GetActiveTileAddress(out int x, out int y))
+            {
+                int idx = Stage.GetClosestTunedTile(Stage.GetTileIndex(x, y), (i) => File.Exists(Stage.GetTileJSON(i)));
+                if (idx >= 0)
+                {
+                    Stage.CopySettings(idx, Stage.GetActiveTile());
+                }
+            }
         }
 
         private void buttonCopySettingsFromMostRecent_Click(object sender, EventArgs e)
         {
-            //TODO
+            int idx = Stage.GetMostRecentlyTunedTile();
+            if (idx >= 0)
+            {
+                Stage.CopySettings(idx, Stage.GetActiveTile());
+            }
         }
 
         private void TileSelectUI_VisibleChanged(object sender, EventArgs e)

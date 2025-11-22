@@ -62,8 +62,8 @@
             this.textBox = new System.Windows.Forms.TextBox();
             this.label3 = new System.Windows.Forms.Label();
             this.buttonCopySettingsManual = new System.Windows.Forms.Button();
-            this.buttonCopySettingsFromClosest = new System.Windows.Forms.Button();
-            this.buttonCopySettingsFromMostRecent = new System.Windows.Forms.Button();
+            this.buttonCopySettingsClosest = new System.Windows.Forms.Button();
+            this.buttonCopySettingsMostRecent = new System.Windows.Forms.Button();
             this.label4 = new System.Windows.Forms.Label();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxTile)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownSkips)).BeginInit();
@@ -420,27 +420,27 @@
             this.buttonCopySettingsManual.UseVisualStyleBackColor = true;
             this.buttonCopySettingsManual.Click += new System.EventHandler(this.buttonCopySettingsManual_Click);
             // 
-            // buttonCopySettingsFromClosest
+            // buttonCopySettingsClosest
             // 
-            this.buttonCopySettingsFromClosest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonCopySettingsFromClosest.Location = new System.Drawing.Point(652, 320);
-            this.buttonCopySettingsFromClosest.Name = "buttonCopySettingsFromClosest";
-            this.buttonCopySettingsFromClosest.Size = new System.Drawing.Size(72, 23);
-            this.buttonCopySettingsFromClosest.TabIndex = 39;
-            this.buttonCopySettingsFromClosest.Text = "Closest Tile";
-            this.buttonCopySettingsFromClosest.UseVisualStyleBackColor = true;
-            this.buttonCopySettingsFromClosest.Click += new System.EventHandler(this.buttonCopySettingsFromClosest_Click);
+            this.buttonCopySettingsClosest.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonCopySettingsClosest.Location = new System.Drawing.Point(652, 320);
+            this.buttonCopySettingsClosest.Name = "buttonCopySettingsClosest";
+            this.buttonCopySettingsClosest.Size = new System.Drawing.Size(72, 23);
+            this.buttonCopySettingsClosest.TabIndex = 39;
+            this.buttonCopySettingsClosest.Text = "Closest Tile";
+            this.buttonCopySettingsClosest.UseVisualStyleBackColor = true;
+            this.buttonCopySettingsClosest.Click += new System.EventHandler(this.buttonCopySettingsFromClosest_Click);
             // 
-            // buttonCopySettingsFromMostRecent
+            // buttonCopySettingsMostRecent
             // 
-            this.buttonCopySettingsFromMostRecent.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
-            this.buttonCopySettingsFromMostRecent.Location = new System.Drawing.Point(730, 320);
-            this.buttonCopySettingsFromMostRecent.Name = "buttonCopySettingsFromMostRecent";
-            this.buttonCopySettingsFromMostRecent.Size = new System.Drawing.Size(105, 23);
-            this.buttonCopySettingsFromMostRecent.TabIndex = 40;
-            this.buttonCopySettingsFromMostRecent.Text = "Most Recent Tile";
-            this.buttonCopySettingsFromMostRecent.UseVisualStyleBackColor = true;
-            this.buttonCopySettingsFromMostRecent.Click += new System.EventHandler(this.buttonCopySettingsFromMostRecent_Click);
+            this.buttonCopySettingsMostRecent.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonCopySettingsMostRecent.Location = new System.Drawing.Point(730, 320);
+            this.buttonCopySettingsMostRecent.Name = "buttonCopySettingsMostRecent";
+            this.buttonCopySettingsMostRecent.Size = new System.Drawing.Size(105, 23);
+            this.buttonCopySettingsMostRecent.TabIndex = 40;
+            this.buttonCopySettingsMostRecent.Text = "Most Recent Tile";
+            this.buttonCopySettingsMostRecent.UseVisualStyleBackColor = true;
+            this.buttonCopySettingsMostRecent.Click += new System.EventHandler(this.buttonCopySettingsFromMostRecent_Click);
             // 
             // label4
             // 
@@ -457,8 +457,8 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.label4);
-            this.Controls.Add(this.buttonCopySettingsFromMostRecent);
-            this.Controls.Add(this.buttonCopySettingsFromClosest);
+            this.Controls.Add(this.buttonCopySettingsMostRecent);
+            this.Controls.Add(this.buttonCopySettingsClosest);
             this.Controls.Add(this.buttonCopySettingsManual);
             this.Controls.Add(this.label3);
             this.Controls.Add(this.textBox);
@@ -540,8 +540,8 @@
         private System.Windows.Forms.TextBox textBox;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.Button buttonCopySettingsManual;
-        private System.Windows.Forms.Button buttonCopySettingsFromClosest;
-        private System.Windows.Forms.Button buttonCopySettingsFromMostRecent;
+        private System.Windows.Forms.Button buttonCopySettingsClosest;
+        private System.Windows.Forms.Button buttonCopySettingsMostRecent;
         private System.Windows.Forms.Label label4;
     }
 }
