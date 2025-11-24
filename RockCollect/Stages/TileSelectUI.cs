@@ -55,10 +55,10 @@ namespace RockCollect.Stages
 
             this.labelRunnableTiles.Text = Stage.CountRunnableTiles().ToString();
 
-            EnableCopySettings(false);
+            EnableCopySettings(Stage.GetActiveTile() >= 0);
         }
 
-        private void RefreshSelectedUI()
+        public void RefreshSelectedUI()
         {
             bool selectedTile = Stage.GetActiveTileAddress(out int tileCol, out int tileRow);
             if (selectedTile)
@@ -114,6 +114,7 @@ namespace RockCollect.Stages
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     Stage.ChooseTile(dialog.GetTileCol(), dialog.GetTileRow());
+                    RefreshSelectedUI();
                 }
             }
         }
@@ -137,7 +138,7 @@ namespace RockCollect.Stages
             if (activeTile < 0) return;
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
-                openFileDialog.InitialDirectory = Directory.GetCurrentDirectory();
+                openFileDialog.InitialDirectory = Stage.GetFinalOutputDirectory();
                 openFileDialog.Filter = "Tile (Tile_*_*.json)|Tile_*_*.json|All files (*.*)|*.*";
                 openFileDialog.FilterIndex = 1;
                 openFileDialog.RestoreDirectory = false;
@@ -152,7 +153,7 @@ namespace RockCollect.Stages
                         int y = int.Parse(match.Groups[2].Value);
                         if ((x >= 0 && x < Stage.GetTilesHorizontal()) && (y >=0 && y < Stage.GetTilesVertical()))
                         {
-                            Stage.CopySettings(Stage.GetTileIndex(x, y), activeTile);
+                            Stage.CopySettings(Stage.GetTileIndex(x, y), activeTile, confirm: true);
                         }
                         else
                         {
@@ -180,7 +181,12 @@ namespace RockCollect.Stages
                 int idx = Stage.GetClosestTunedTile(Stage.GetTileIndex(x, y), (i) => File.Exists(Stage.GetTileJSON(i)));
                 if (idx >= 0)
                 {
-                    Stage.CopySettings(idx, Stage.GetActiveTile());
+                    Stage.CopySettings(idx, Stage.GetActiveTile(), confirm: true);
+                }
+                else
+                {
+                    MessageBox.Show(string.Format("No closest tuned tile found to tile ({0}, {1}).", x, y),
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -192,6 +198,11 @@ namespace RockCollect.Stages
             {
                 Stage.CopySettings(idx, Stage.GetActiveTile());
             }
+                else
+                {
+                    MessageBox.Show("No most recently tuned tile found.",
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
         }
 
         private void TileSelectUI_VisibleChanged(object sender, EventArgs e)

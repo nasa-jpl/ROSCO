@@ -110,12 +110,12 @@ namespace RockCollect.Stages
             string tileJson = GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
             if (File.Exists(tileJson))
             {
-                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson));
-                settings.MinShadowArea = float.Parse(existing.Data["MINSHADOWAREA"]);
-                settings.MaxShadowArea = float.Parse(existing.Data["MAXSHADOWAREA"]);
-                settings.ShadowAspect = float.Parse(existing.Data["SHADOWASPECT"]);
-                settings.MeanGradient = float.Parse(existing.Data["MEANGRADIENT"]);
-                settings.MinShadowSplit = float.Parse(existing.Data["MINSHADOWSPLIT"]);
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
+                settings.MinShadowArea = float.Parse(existing["MINSHADOWAREA"]);
+                settings.MaxShadowArea = float.Parse(existing["MAXSHADOWAREA"]);
+                settings.ShadowAspect = float.Parse(existing["SHADOWASPECT"]);
+                settings.MeanGradient = float.Parse(existing["MEANGRADIENT"]);
+                settings.MinShadowSplit = float.Parse(existing["MINSHADOWSPLIT"]);
             }
 
             UpdateDetections(out RockDetector.DetectionResults results);

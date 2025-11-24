@@ -55,16 +55,12 @@ namespace RockCollect.Stages
 
         public override bool LoadInput(string directory)
         {
-            bool result = base.LoadInput(directory);
-            if (result == false)
-                return false;
+            if (!base.LoadInput(directory)) return false;
 
-            if (!this.inData.Data.ContainsKey("IMAGE_PATH"))
-                return false;
+            if (!this.inData.Data.ContainsKey("IMAGE_PATH")) return false;
 
             ImagePath = inData.Data["IMAGE_PATH"];
-            if (!File.Exists(ImagePath))
-                throw new Exception(string.Format("Input image {0} doesn't exist", ImagePath));
+            if (!File.Exists(ImagePath)) throw new Exception(string.Format("Input image {0} doesn't exist", ImagePath));
 
             if ((WidthPixels == 0 || HeightPixels == 0) &&
                 !GDALSerializer.LoadMetadata(ImagePath, out WidthPixels, out HeightPixels, out int bands,
@@ -150,8 +146,7 @@ namespace RockCollect.Stages
                 this.outData.Data.Add("TILES_HORIZONTAL", TilesHorizontal.ToString());
                 this.outData.Data.Add("TILES_VERTICAL", TilesVertical.ToString());
 
-                if (!WriteOutputJSON())
-                    return false;
+                if (!WriteOutputJSON()) return false;
 
                 return true;
             }
@@ -283,10 +278,36 @@ namespace RockCollect.Stages
             return ret;
         }
 
-        public void CopySettings(int fromIndex, int toIndex, string subdir = null)
+        public void CopySettings(int fromIndex, int toIndex, string subdir = null, bool confirm = false)
         {
             GetTileAddress(fromIndex, out int fromX, out int fromY);
             GetTileAddress(toIndex, out int toX, out int toY);
+
+            if (fromX < 0 || fromY < 0 || fromX >= TilesHorizontal || fromY >= TilesVertical)
+            {
+                MessageBox.Show(
+                    string.Format("Invalid tile to copy from (col={0}, row={1}), must be in range (0, 0) to ({2}, {3})",
+                                  fromX, fromY, TilesHorizontal - 1, TilesVertical - 1),
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (toX < 0 || toY < 0 || toX >= TilesHorizontal || toY >= TilesVertical)
+            {
+                MessageBox.Show(
+                    string.Format("Invalid tile to copy to (col={0}, row={1}), must be in range (0, 0) to ({2}, {3})",
+                                  toX, toY, TilesHorizontal - 1, TilesVertical - 1),
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (confirm)
+            {
+                var result = MessageBox.Show(
+                    string.Format("Copy settings for tile ({0}, {1}) to tile ({2}, {3})?", fromX, fromY, toX, toY),
+                    "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                if (result == DialogResult.Cancel) return;
+            }
 
             var tsd = TileShapeData;
             if (tsd != null && (tsd[fromIndex] != null || tsd[toIndex] != null))
@@ -304,18 +325,17 @@ namespace RockCollect.Stages
                 }
             }
 
-            string srcName = GetTileOutputName(fromIndex) + ".json";
             string srcJSON = GetTileJSON(fromIndex);
             string dstJSON = GetTileJSON(toIndex);
 
-            var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(srcJSON)).Data;
+            var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(srcJSON));
 
-            data.Remove("TILE_PATH");
+            data.Data.Remove("TILE_PATH");
 
-            data["COPIED_FROM"] = srcName;
-            data["TILE_INDEX"] = toIndex.ToString();
-            data["TILE_COL"] = toX.ToString();
-            data["TILE_ROW"] = toY.ToString();
+            data.Data["COPIED_FROM"] = GetTileOutputName(fromIndex) + ".json";
+            data.Data["TILE_INDEX"] = toIndex.ToString();
+            data.Data["TILE_COL"] = toX.ToString();
+            data.Data["TILE_ROW"] = toY.ToString();
 
             if (!string.IsNullOrEmpty(subdir))
             {
@@ -401,18 +421,27 @@ namespace RockCollect.Stages
                     {
                         Console.WriteLine(string.Format("loading settings for tile at col {0}, row {1} from {2}",
                                                         x, y, tileJSON));
-                        var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJSON)).Data;
-                        var settings = new RockDetector.Settings(data);
+                        var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJSON));
+                        int readX = data.Data.ContainsKey("TILE_COL") ? int.Parse(data.Data["TILE_COL"]) : -1;
+                        int readY = data.Data.ContainsKey("TILE_ROW") ? int.Parse(data.Data["TILE_ROW"]) : -1;
+                        if (x != readX || y != readY)
+                        {
+                            System.Windows.Forms.MessageBox.Show(
+                                string.Format("JSON settings {0} for tile ({1}, 2}) have TILE_COL={3}, TILE_ROW={4}",
+                                              tileJSON, x, y, readX, readY),
+                                "Tile Settings Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        }
+                        var settings = new RockDetector.Settings(data.Data);
                         int idx = GetTileIndex(x, y);
                         inSettings[idx] = RockDetector.CreateInSettings(settings);
                         loaded[idx] = true;
                         numLoaded++;
-                        string was = data.ContainsKey("TILE_GROUP") ? data["TILE_GROUP"] : null;
+                        string was = data.Data.ContainsKey("TILE_GROUP") ? data.Data["TILE_GROUP"] : null;
                         if (tsd != null && tsd[idx] != null && was != tsd[idx].grp)
                         {
                             Console.WriteLine(string.Format("updating TILE_GROUP from \"{0}\" to \"{1}\" in {2}",
                                                             was, tsd[idx].grp, tileJSON));
-                            data["TILE_GROUP"] = tsd[idx].grp;
+                            data.Data["TILE_GROUP"] = tsd[idx].grp;
                             File.WriteAllText(tileJSON, JsonSerializer.Serialize(data, data.GetType(), writeJSONOpts));
                         } 
                     }
@@ -449,9 +478,7 @@ namespace RockCollect.Stages
                         System.Windows.Forms.MessageBox.Show(
                             string.Format("group \"{0}\" has 0 already tuned tiles but {1} tiles to run",
                                           grp, runPerGroup[grp]),
-                            "Shape File Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error
+                            "Shape File Error", MessageBoxButtons.OK, MessageBoxIcon.Error
                         );
                     }
                 }
@@ -619,14 +646,14 @@ namespace RockCollect.Stages
 
         public override bool Activate(Panel workArea, Form statusForm, bool forward)
         {
-            if (forward)
-            {
-                ClearTile();
-            }
-
             if (!base.Activate(workArea, statusForm, forward))
             {
                 return false;
+            }
+
+            if (forward)
+            {
+                ClearTile();
             }
 
             return true;
@@ -688,10 +715,10 @@ namespace RockCollect.Stages
                 }
             }
             
-            ActiveTile = remainingTilesToTune.First();
+            int idx = remainingTilesToTune.First();
             remainingTilesToTune.RemoveAt(0);
             
-            GetTileAddress(ActiveTile, out int tileCol, out int tileRow);
+            GetTileAddress(idx, out int tileCol, out int tileRow);
 
             ChooseTile(tileCol, tileRow);
 
@@ -710,6 +737,17 @@ namespace RockCollect.Stages
                 return;
             }
 
+            string tileJSON = GetTileJSON(tileCol, tileRow);
+            if (File.Exists(tileJSON))
+            {
+                MessageBox.Show(
+                    string.Format("Re-tuning tile ({0}, {1}), will start with existing settings from {2}",
+                                  tileCol, tileRow, tileJSON),
+                    "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+
+            ActiveTile = GetTileIndex(tileCol, tileRow);
+
             GetTilePixels(tileCol, tileRow, TILESIZE, out int pixelCol, out int pixelRow);
             GetAvailableTilePixels(pixelCol, pixelRow, this.WidthPixels, this.HeightPixels,
                                    out int availableWidth, out int availableHeight);
@@ -727,6 +765,7 @@ namespace RockCollect.Stages
             ActiveImage = null;
             ActiveTile = -1;
             (Control as TileSelectUI).EnableCopySettings(false);
+            (Control as TileSelectUI).RefreshSelectedUI();
         }
 
         public void ParseShapeFile(string shapeFilePath)

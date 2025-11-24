@@ -98,8 +98,8 @@ namespace RockCollect.Stages
             string tileJson = GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
             if (File.Exists(tileJson))
             {
-                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson));
-                settings.Confidence = float.Parse(existing.Data["CONFIDENCE"]);
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
+                settings.Confidence = float.Parse(existing["CONFIDENCE"]);
             }
 
             UpdateDetections(out RockDetector.DetectionResults results, out DetectionsBitmap);
@@ -473,7 +473,8 @@ namespace RockCollect.Stages
 
         public override string GetOutputJSONPath()
         {
-            return Path.Combine(GetDirectory(Dir.Output), GetTileOutputName(TileIndex) + ".json");
+            GetTileAddress(TileIndex, NumTilesHorizontal, out int tileCol, out int tileRow);
+            return GetTileJSON(tileCol, tileRow);
         }
 
         public override bool SaveOutput()
@@ -515,8 +516,7 @@ namespace RockCollect.Stages
                 Console.WriteLine(string.Format("saving detection settings for tile to \"{0}\" and \"{1}\"",
                                                 outJSONPath, outParamsPath));
 
-                if (!WriteOutputJSON())
-                    return false;
+                if (!WriteOutputJSON()) return false;
 
                 RockDetector.INSETTINGS inSettings = RockDetector.CreateInSettings(settings);
                 if (0 == RockDetector.write_param_file(outParamsPath, ref inSettings))

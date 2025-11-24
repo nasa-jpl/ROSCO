@@ -68,23 +68,18 @@ namespace RockCollect.Stages
 
         public override bool LoadInput(string directory)
         {
-            bool result = base.LoadInput(directory);
-            if (result == false)
-                return false;
+            if (!base.LoadInput(directory)) return false;
 
-            if (!this.inData.Data.ContainsKey("TILE_PATH"))
-                return false;
+            if (!this.inData.Data.ContainsKey("TILE_PATH")) return false;
 
             TilePath = inData.Data["TILE_PATH"];
-            if (!File.Exists(TilePath))
-                throw new Exception(string.Format("Input tile image {0} doesn't exist", TilePath));
+            if (!File.Exists(TilePath)) throw new Exception(string.Format("Input tile image {0} not found", TilePath));
 
             GDALSerializer.LoadMetadata(TilePath, out int widthPixels, out int heightPixels, out int bands,
                                         out Type[] dataTypes);
             TileImage = GDALSerializer.Load(TilePath, 0, 0, widthPixels, heightPixels);
 
-            if (TileImage == null)
-                return false;
+            if (TileImage == null) return false;
 
             ShadowPath = Path.Combine(GetDirectory(Dir.Output), "shadow.pgm");
             GammaPath = Path.Combine(GetDirectory(Dir.Output), "gamma.pgm");
@@ -92,9 +87,9 @@ namespace RockCollect.Stages
             string tileJson = GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
             if (File.Exists(tileJson))
             {
-                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson));
-                Gamma = float.Parse(existing.Data["GAMMA"]);
-                ThresholdOverride = int.Parse(existing.Data["GAMMA_THRESHOLD_OVERRIDE"]);
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
+                Gamma = float.Parse(existing["GAMMA"]);
+                ThresholdOverride = int.Parse(existing["GAMMA_THRESHOLD_OVERRIDE"]);
             }
                 
             UpdateShadowAndOverlay();

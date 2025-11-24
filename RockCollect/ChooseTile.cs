@@ -21,10 +21,14 @@ namespace RockCollect
         {
             Stage = stage;
             InitializeComponent();
+            int maxCol = Stage.GetNumTilesHorizontal() - 1;
+            int maxRow = Stage.GetNumTilesVertical() - 1;
             numericUpDownTileCol.Minimum = 0;
-            numericUpDownTileCol.Maximum = Stage.GetNumTilesHorizontal() - 1;
+            numericUpDownTileCol.Maximum = maxCol;
             numericUpDownTileRow.Minimum = 0;
-            numericUpDownTileRow.Maximum = Stage.GetNumTilesVertical() - 1;
+            numericUpDownTileRow.Maximum = maxRow;
+            labelTileColMinMax.Text = "min: 0, max: " + maxCol;
+            labelTileRowMinMax.Text = "min: 0, max: " + maxRow;
         }
 
         public int GetTileCol()

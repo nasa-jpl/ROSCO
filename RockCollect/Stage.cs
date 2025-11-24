@@ -105,18 +105,12 @@ namespace RockCollect
         {
             switch (dir)
             {
-                case Dir.Stage:
-                    return StageDir;
-                case Dir.Input:
-                    return Path.Combine(StageDir, "Input");
-                case Dir.Output:
-                    return Path.Combine(StageDir, "Output");
-                case Dir.Debug:
-                    return Path.Combine(StageDir, "Logs");
-                case Dir.FinalOutput:
-                    return GetFinalOutputDirectory();
-                default:
-                    throw new Exception("Unknown directory type");
+                case Dir.Stage: return StageDir;
+                case Dir.Input: return Path.Combine(StageDir, "Input");
+                case Dir.Output: return Path.Combine(StageDir, "Output");
+                case Dir.Debug: return Path.Combine(StageDir, "Logs");
+                case Dir.FinalOutput: return GetFinalOutputDirectory();
+                default: throw new Exception("Unknown directory type");
             }
         }
 
@@ -268,10 +262,7 @@ namespace RockCollect
 
         public bool WriteOutputJSON()
         {
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true
-            };
+            var options = new JsonSerializerOptions { WriteIndented = true };
             string jsonString = JsonSerializer.Serialize(outData, outData.GetType(), options);
             File.WriteAllText(this.GetOutputJSONPath(), jsonString);
             return true;
