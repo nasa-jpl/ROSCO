@@ -159,9 +159,7 @@ namespace RockCollect.Stages
                             MessageBox.Show(
                                 string.Format("Invalid tile (col={0}, row={1}), must be in range (0, 0) to ({2}, {3})",
                                               x, y, Stage.GetTilesHorizontal() - 1, Stage.GetTilesVertical() - 1),
-                                "Error",
-                                MessageBoxButtons.OK,
-                                MessageBoxIcon.Error);
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                         }
                     }
                     else
@@ -169,9 +167,7 @@ namespace RockCollect.Stages
                         MessageBox.Show(
                             string.Format("Invalid tile filename \"{0}\", must be in the form Tile_######_######.json",
                                           Path.GetFileName(openFileDialog.FileName)),
-                            "Error",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Error);
+                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }

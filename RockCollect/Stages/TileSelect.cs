@@ -285,16 +285,38 @@ namespace RockCollect.Stages
 
         public void CopySettings(int fromIndex, int toIndex, string subdir = null)
         {
-            GetTileAddress(toIndex, out int x, out int y);
+            GetTileAddress(fromIndex, out int fromX, out int fromY);
+            GetTileAddress(toIndex, out int toX, out int toY);
+
+            var tsd = TileShapeData;
+            if (tsd != null && (tsd[fromIndex] != null || tsd[toIndex] != null))
+            {
+                string fromGrp = tsd[fromIndex] != null ? tsd[fromIndex].grp : null;
+                string toGrp = tsd[toIndex] != null ? tsd[toIndex].grp : null;
+                if (fromGrp != toGrp)
+                {
+                    var result = MessageBox.Show(
+                        string.Format("Tile ({0}, {1}) is in shape file group {2}, are you sure you want to copy its " +
+                                      "settings to tile ({3}, {4}) in shape file group {5}?",
+                                      fromX, fromY, fromGrp, toX, toY, toGrp),
+                        "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
+                    if (result == DialogResult.Cancel) return;
+                }
+            }
+
             string srcName = GetTileOutputName(fromIndex) + ".json";
             string srcJSON = GetTileJSON(fromIndex);
-            var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(srcJSON)).Data;
-            data["COPIED_FROM"] = srcName;
-            data.Remove("TILE_PATH");
-            data["TILE_INDEX"] = toIndex.ToString();
-            data["TILE_COL"] = x.ToString();
-            data["TILE_ROW"] = y.ToString();
             string dstJSON = GetTileJSON(toIndex);
+
+            var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(srcJSON)).Data;
+
+            data.Remove("TILE_PATH");
+
+            data["COPIED_FROM"] = srcName;
+            data["TILE_INDEX"] = toIndex.ToString();
+            data["TILE_COL"] = toX.ToString();
+            data["TILE_ROW"] = toY.ToString();
+
             if (!string.IsNullOrEmpty(subdir))
             {
                 string dir = Path.Combine(GetDirectory(Dir.FinalOutput), subdir);
@@ -302,6 +324,7 @@ namespace RockCollect.Stages
                 string dstName = GetTileOutputName(toIndex) + ".json";
                 dstJSON = Path.Combine(dir, dstName);
             }
+
             var writeJSONOpts = new JsonSerializerOptions { WriteIndented = true };
             File.WriteAllText(dstJSON, JsonSerializer.Serialize(data, data.GetType(), writeJSONOpts));
         }
@@ -677,6 +700,16 @@ namespace RockCollect.Stages
 
         public void ChooseTile(int tileCol, int tileRow)
         {
+            if (tileCol < 0 || tileRow < 0 || tileCol >= TilesHorizontal || tileRow >= TilesVertical)
+            {
+                MessageBox.Show(
+                    string.Format("Invalid tile (col={0}, row={1}), must be in range (0, 0) to ({2}, {3})",
+                                  tileCol, tileRow, TilesHorizontal - 1, TilesVertical - 1),
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                ClearTile();
+                return;
+            }
+
             GetTilePixels(tileCol, tileRow, TILESIZE, out int pixelCol, out int pixelRow);
             GetAvailableTilePixels(pixelCol, pixelRow, this.WidthPixels, this.HeightPixels,
                                    out int availableWidth, out int availableHeight);
@@ -745,6 +778,7 @@ namespace RockCollect.Stages
             }
 
             TileShapeData = new ShapeData[nt];
+            var tilesToVisit = new HashSet<int>();
 
             for (int i = 0; i < nt; i++)
             {
@@ -763,32 +797,11 @@ namespace RockCollect.Stages
                     string g = DbfParseString(r.RecordFields[groupField]);
                     int idx = GetTileIndex(x, y);
                     TileShapeData[idx] = new ShapeData { tileX = x, tileY = y, visit = v, run = u, grp = g };
+                    if (v) tilesToVisit.Add(i);
                 } catch (Exception ex) {
                     System.Windows.Forms.MessageBox.Show(
                         string.Format("Error parsing record {0} in {1}: {2}.", i, dbfFilePath, ex.Message),
-                        "Shape File Error",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Error
-                    );
-                }
-            }
-
-            var visitPerGroup = new Dictionary<string, int>();
-            var runPerGroup = new Dictionary<string, int>();
-            var tilesToVisit = new HashSet<int>();
-            for (int i = 0; i < nt; i++)
-            {
-                if (TileShapeData[i] != null)
-                {
-                    string grp = TileShapeData[i].grp;
-                    if (!visitPerGroup.ContainsKey(grp)) visitPerGroup[grp] = 0;
-                    if (TileShapeData[i].visit)
-                    {
-                        tilesToVisit.Add(i);
-                        visitPerGroup[grp] = visitPerGroup[grp] + 1;
-                    }
-                    if (!runPerGroup.ContainsKey(grp)) runPerGroup[grp] = 0;
-                    if (TileShapeData[i].run) runPerGroup[grp] = runPerGroup[grp] + 1;
+                        "Shape File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
 
