@@ -84,7 +84,7 @@ namespace RockCollect.Stages
             ShadowPath = Path.Combine(GetDirectory(Dir.Output), "shadow.pgm");
             GammaPath = Path.Combine(GetDirectory(Dir.Output), "gamma.pgm");
 
-            string tileJson = GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
+            string tileJson = GetTileJSON();
             if (File.Exists(tileJson))
             {
                 var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
@@ -97,18 +97,21 @@ namespace RockCollect.Stages
             return true;
         }
 
+        private string GetTileJSON()
+        {
+            return GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
+        }
+
         public override bool SaveOutput()
         {
             if (base.SaveOutput())
             {
-                // tile image
-                if (TileImage == null)
-                    return false;
+                if (TileImage == null) return false;
 
-                if (string.IsNullOrEmpty(TilePath))
-                    return false;
+                if (string.IsNullOrEmpty(TilePath)) return false;
 
-                string tilePath = Path.Combine(GetDirectory(Dir.Output), "tile.pgm"); //TODO:need a data passthru, copies image input to output and updates paths
+                //TODO:need a data passthru, copies image input to output and updates paths
+                string tilePath = Path.Combine(GetDirectory(Dir.Output), "tile.pgm");
                 GDALSerializer.Save(TileImage, tilePath, null);
 
                 this.outData.Data.Add("TILE_PATH", tilePath);
@@ -125,23 +128,17 @@ namespace RockCollect.Stages
                 InputToOutput("TILES_VERTICAL");
                 InputToOutput("COMPARISON_ROCKLIST");
                 
-                // shadow image
-                if (ShadowImage == null)
-                    return false;
+                if (ShadowImage == null) return false;
 
-                if (string.IsNullOrEmpty(ShadowPath))
-                    return false;
+                if (string.IsNullOrEmpty(ShadowPath)) return false;
 
                 string shadowPath = Path.Combine(GetDirectory(Dir.Output), "shadow.pgm");
                 GDALSerializer.Save(ShadowImage, shadowPath, null);
                 this.outData.Data.Add("SHADOW_PATH", ShadowPath);
 
-                // gamma image
-                if (GammaImage == null)
-                    return false;
+                if (GammaImage == null) return false;
 
-                if (string.IsNullOrEmpty(GammaPath))
-                    return false;
+                if (string.IsNullOrEmpty(GammaPath)) return false;
 
                 string gammaPath = Path.Combine(GetDirectory(Dir.Output), "gamma.pgm");
                 GDALSerializer.Save(GammaImage, gammaPath, null);
@@ -167,8 +164,18 @@ namespace RockCollect.Stages
                 this.outData.Data.Add("GAMMA", Gamma.ToString());
                 this.outData.Data.Add("GAMMA_THRESHOLD_OVERRIDE", ThresholdOverride.ToString());
 
-                if (!WriteOutputJSON())
-                    return false;
+                if (!WriteOutputJSON()) return false;
+
+                string tileJson = GetTileJSON();
+                if (File.Exists(tileJson))
+                {
+                    var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
+                    existing["GAMMA"] = Gamma.ToString();
+                    existing["GAMMA_THRESHOLD_OVERRIDE"] = ThresholdOverride.ToString();
+                    var options = new JsonSerializerOptions { WriteIndented = true };
+                    string jsonString = JsonSerializer.Serialize(existing, existing.GetType(), options);
+                    File.WriteAllText(tileJson, jsonString);
+                }
 
                 return true;
             }

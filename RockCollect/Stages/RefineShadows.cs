@@ -107,7 +107,7 @@ namespace RockCollect.Stages
 
             ShadowImage = ImageThreshold.CreateOverlayImage(TileImage, ShadowImage, 0); //red
 
-            string tileJson = GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
+            string tileJson = GetTileJSON();
             if (File.Exists(tileJson))
             {
                 var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
@@ -121,6 +121,11 @@ namespace RockCollect.Stages
             UpdateDetections(out RockDetector.DetectionResults results);
 
             return true;
+        }
+
+        private string GetTileJSON()
+        {
+            return GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
         }
 
         private void UpdateCurrentBlobsImage(Dictionary<int, List<int>> lookup)
@@ -276,26 +281,37 @@ namespace RockCollect.Stages
 
         public override bool SaveOutput()
         {
-            if (base.SaveOutput())
+            if (!base.SaveOutput()) return false;
+            
+            InputToOutput("IMAGE_PATH");
+            InputToOutput("TILE_PATH");
+            InputToOutput("TILE_INDEX");
+            InputToOutput("TILE_COL");
+            InputToOutput("TILE_ROW");
+            InputToOutput("TILE_GROUP");
+            InputToOutput("TILES_HORIZONTAL");
+            InputToOutput("TILES_VERTICAL");
+            InputToOutput("COMPARISON_ROCKLIST");
+            
+            settings.Write(this.outData.Data);
+            
+            if (!WriteOutputJSON()) return false;
+            
+            string tileJson = GetTileJSON();
+            if (File.Exists(tileJson))
             {
-                InputToOutput("IMAGE_PATH");
-                InputToOutput("TILE_PATH");
-                InputToOutput("TILE_INDEX");
-                InputToOutput("TILE_COL");
-                InputToOutput("TILE_ROW");
-                InputToOutput("TILE_GROUP");
-                InputToOutput("TILES_HORIZONTAL");
-                InputToOutput("TILES_VERTICAL");
-                InputToOutput("COMPARISON_ROCKLIST");
-
-                settings.Write(this.outData.Data);
-
-                if (!WriteOutputJSON())
-                    return false;
-
-                return true;
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
+                existing["MINSHADOWAREA"] = settings.MinShadowArea.ToString();
+                existing["MAXSHADOWAREA"] = settings.MaxShadowArea.ToString();
+                existing["SHADOWASPECT"] = settings.ShadowAspect.ToString();
+                existing["MEANGRADIENT"] = settings.MeanGradient.ToString();
+                existing["MINSHADOWSPLIT"] = settings.MinShadowSplit.ToString();
+                var options = new JsonSerializerOptions { WriteIndented = true };
+                string jsonString = JsonSerializer.Serialize(existing, existing.GetType(), options);
+                File.WriteAllText(tileJson, jsonString);
             }
-            return false;
+
+            return true;
         }
     }
 }

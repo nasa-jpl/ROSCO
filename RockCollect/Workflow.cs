@@ -78,10 +78,7 @@ namespace RockCollect
 
             if (AtValidStage())
             {
-                if (!activeStage.Deactivate(true))
-                {
-                    return;
-                }
+                if (!activeStage.Deactivate(true)) return;
             }
 
             if (AtFirstStage())
@@ -169,8 +166,7 @@ namespace RockCollect
             if (AtValidStage() && !AtFirstStage())
             {
                 activeStage = Stages.ElementAt(ActiveStageIndex);
-                if (false == activeStage.Deactivate(false))
-                    return;
+                if (!activeStage.Deactivate(false)) return;
 
                 ActiveStageIndex--;
                 Stage nextStage = Stages.ElementAt(ActiveStageIndex);

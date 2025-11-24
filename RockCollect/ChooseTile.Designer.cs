@@ -37,6 +37,7 @@
             this.buttonOk = new System.Windows.Forms.Button();
             this.buttonCancel = new System.Windows.Forms.Button();
             this.buttonMostRecent = new System.Windows.Forms.Button();
+            this.buttonChooseExisting = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTileCol)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericUpDownTileRow)).BeginInit();
             this.SuspendLayout();
@@ -44,7 +45,7 @@
             // label2
             // 
             this.label2.AutoSize = true;
-            this.label2.Location = new System.Drawing.Point(12, 63);
+            this.label2.Location = new System.Drawing.Point(12, 79);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(41, 13);
             this.label2.TabIndex = 40;
@@ -52,7 +53,7 @@
             // 
             // numericUpDownTileCol
             // 
-            this.numericUpDownTileCol.Location = new System.Drawing.Point(59, 61);
+            this.numericUpDownTileCol.Location = new System.Drawing.Point(59, 77);
             this.numericUpDownTileCol.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -65,7 +66,7 @@
             // label1
             // 
             this.label1.AutoSize = true;
-            this.label1.Location = new System.Drawing.Point(26, 98);
+            this.label1.Location = new System.Drawing.Point(26, 114);
             this.label1.Name = "label1";
             this.label1.Size = new System.Drawing.Size(24, 13);
             this.label1.TabIndex = 42;
@@ -73,7 +74,7 @@
             // 
             // numericUpDownTileRow
             // 
-            this.numericUpDownTileRow.Location = new System.Drawing.Point(59, 96);
+            this.numericUpDownTileRow.Location = new System.Drawing.Point(59, 112);
             this.numericUpDownTileRow.Maximum = new decimal(new int[] {
             1000,
             0,
@@ -86,7 +87,7 @@
             // labelTileColMinMax
             // 
             this.labelTileColMinMax.AutoSize = true;
-            this.labelTileColMinMax.Location = new System.Drawing.Point(136, 63);
+            this.labelTileColMinMax.Location = new System.Drawing.Point(136, 79);
             this.labelTileColMinMax.Name = "labelTileColMinMax";
             this.labelTileColMinMax.Size = new System.Drawing.Size(72, 13);
             this.labelTileColMinMax.TabIndex = 43;
@@ -95,7 +96,7 @@
             // labelTileRowMinMax
             // 
             this.labelTileRowMinMax.AutoSize = true;
-            this.labelTileRowMinMax.Location = new System.Drawing.Point(136, 98);
+            this.labelTileRowMinMax.Location = new System.Drawing.Point(136, 114);
             this.labelTileRowMinMax.Name = "labelTileRowMinMax";
             this.labelTileRowMinMax.Size = new System.Drawing.Size(72, 13);
             this.labelTileRowMinMax.TabIndex = 44;
@@ -103,7 +104,7 @@
             // 
             // buttonOk
             // 
-            this.buttonOk.Location = new System.Drawing.Point(22, 139);
+            this.buttonOk.Location = new System.Drawing.Point(22, 144);
             this.buttonOk.Name = "buttonOk";
             this.buttonOk.Size = new System.Drawing.Size(75, 23);
             this.buttonOk.TabIndex = 45;
@@ -113,7 +114,7 @@
             // 
             // buttonCancel
             // 
-            this.buttonCancel.Location = new System.Drawing.Point(129, 139);
+            this.buttonCancel.Location = new System.Drawing.Point(129, 144);
             this.buttonCancel.Name = "buttonCancel";
             this.buttonCancel.Size = new System.Drawing.Size(75, 23);
             this.buttonCancel.TabIndex = 46;
@@ -123,7 +124,7 @@
             // 
             // buttonMostRecent
             // 
-            this.buttonMostRecent.Location = new System.Drawing.Point(12, 21);
+            this.buttonMostRecent.Location = new System.Drawing.Point(12, 16);
             this.buttonMostRecent.Name = "buttonMostRecent";
             this.buttonMostRecent.Size = new System.Drawing.Size(203, 23);
             this.buttonMostRecent.TabIndex = 47;
@@ -131,11 +132,22 @@
             this.buttonMostRecent.UseVisualStyleBackColor = true;
             this.buttonMostRecent.Click += new System.EventHandler(this.buttonMostRecent_Click);
             // 
+            // buttonChooseExisting
+            // 
+            this.buttonChooseExisting.Location = new System.Drawing.Point(15, 44);
+            this.buttonChooseExisting.Name = "buttonChooseExisting";
+            this.buttonChooseExisting.Size = new System.Drawing.Size(203, 23);
+            this.buttonChooseExisting.TabIndex = 48;
+            this.buttonChooseExisting.Text = "Choose Existing Tile...";
+            this.buttonChooseExisting.UseVisualStyleBackColor = true;
+            this.buttonChooseExisting.Click += new System.EventHandler(this.buttonChooseExisting_Click);
+            // 
             // ChooseTile
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(235, 182);
+            this.Controls.Add(this.buttonChooseExisting);
             this.Controls.Add(this.buttonMostRecent);
             this.Controls.Add(this.buttonCancel);
             this.Controls.Add(this.buttonOk);
@@ -165,5 +177,6 @@
         private System.Windows.Forms.Button buttonOk;
         private System.Windows.Forms.Button buttonCancel;
         private System.Windows.Forms.Button buttonMostRecent;
+        private System.Windows.Forms.Button buttonChooseExisting;
     }
 }

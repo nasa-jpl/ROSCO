@@ -165,16 +165,8 @@ namespace RockCollect
         
         public virtual bool Deactivate(bool forward)
         {
-            if (!SaveOutput())
-            {
-                return false;
-            }
-
-            if (!TeardownUI())
-            {
-                return false;
-            }
-
+            if (!SaveOutput()) return false;
+            if (!TeardownUI()) return false;
             return true;
         }
 
