@@ -86,14 +86,14 @@ namespace RockCollect
 
         public string GetFinalOutputDirectory(string imagePath)
         {
-            if (!string.IsNullOrEmpty(imagePath))
-            {
-                return Path.Combine(FinalOutputDir, Path.GetFileNameWithoutExtension(imagePath));
-            }
-            else
-            {
-                return FinalOutputDir;
-            }
+            string dir = FinalOutputDir.TrimEnd(new char[] { '/', '\\' });
+
+            if (string.IsNullOrEmpty(imagePath)) return dir;
+
+            string imageName = Path.GetFileNameWithoutExtension(imagePath);
+            if (!dir.EndsWith(imageName)) dir = Path.Combine(dir, imageName);
+
+            return dir;
         }
 
         public virtual string GetFinalOutputDirectory()

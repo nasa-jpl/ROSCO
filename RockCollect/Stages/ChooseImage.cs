@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Windows.Forms;
 
 namespace RockCollect.Stages
@@ -38,25 +39,23 @@ namespace RockCollect.Stages
 
         public override bool SaveOutput()
         {
-            if (base.SaveOutput())
-            {
-                if (string.IsNullOrEmpty(ImagePath))
-                    return false;
+            if (!base.SaveOutput()) return false;
+            
+            if (string.IsNullOrEmpty(ImagePath)) return false;
+            
+            string dir = GetFinalOutputDirectory(ImagePath);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
 
-                this.outData.Data.Add("IMAGE_PATH", ImagePath);
-                this.outData.Data.Add("SHAPE_FILE", ShapeFilePath);
-                this.outData.Data.Add("COMPARISON_ROCKLIST", ComparisonRocklistPath);
-                this.outData.Data.Add("GSD", GroundSamplingDistance.ToString("F5"));
-                this.outData.Data.Add("AZIMUTH", SubSolarAzimuthDegrees.ToString("F5"));
-                this.outData.Data.Add("INCIDENCE", SolarIncidenceDegrees.ToString("F5"));
+            this.outData.Data.Add("IMAGE_PATH", ImagePath);
+            this.outData.Data.Add("SHAPE_FILE", ShapeFilePath);
+            this.outData.Data.Add("COMPARISON_ROCKLIST", ComparisonRocklistPath);
+            this.outData.Data.Add("GSD", GroundSamplingDistance.ToString("F5"));
+            this.outData.Data.Add("AZIMUTH", SubSolarAzimuthDegrees.ToString("F5"));
+            this.outData.Data.Add("INCIDENCE", SolarIncidenceDegrees.ToString("F5"));
+            
+            if (!WriteOutputJSON()) return false;
 
-                if (!WriteOutputJSON())
-                    return false;
-
-                return true;
-            }
-
-            return false;
+            return true;
         }
 
         public void SetGroundSamplingDistance(float metersPerPixel)
