@@ -52,7 +52,7 @@ namespace RockCollect.Stages
 
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
-                    Stage.SetFinalOutputDirectory(dialog.SelectedPath);
+                    Stage.ParentWorkflow.SetFinalOutputDirectory(dialog.SelectedPath);
                     labelStatusStorageFolder.Text =
                         "Storge Folder: " + Stage.GetFinalOutputDirectory(null);
                 }

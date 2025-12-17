@@ -26,10 +26,11 @@ namespace RockCollect
         private string FinalOutputDir;
         private Panel WorkArea;
         private Form StatusForm;
-        private Workflow parentWorkflow;
         protected Logger Log;
         public StageData inData;
         public StageData outData;
+
+        public Workflow ParentWorkflow;
 
         public Action OnTeardownUI;
         public Action OnTeardownStatusUI;
@@ -75,7 +76,7 @@ namespace RockCollect
             FinalOutputDir = finalOutputDirectory;
             inData = new StageData();
             outData = new StageData();
-            parentWorkflow = workflow;
+            ParentWorkflow = workflow;
                
             EnsureDirectories();
         }

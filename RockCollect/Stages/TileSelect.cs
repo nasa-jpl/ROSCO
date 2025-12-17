@@ -86,17 +86,26 @@ namespace RockCollect.Stages
                     string file = GetTileJSON(x, y);
                     if (File.Exists(file))
                     {
-                        if (ValidTileJSON(file)) alreadyTuned.Add(GetTileIndex(x, y));
-                        else np++;
+                        string reason = null;
+                        if (ValidTileJSON(file, (r) => { reason = r; })) alreadyTuned.Add(GetTileIndex(x, y));
+                        else
+                        {
+                            Console.WriteLine($"partial/invalid tile JSON \"{file}\": {reason}");
+                            np++;
+                        }
                     }
                 }
             }
 
             if (np > 0)
             {
-                MessageBox.Show(string.Format("Found {0} partially (or invalidly) tuned tiles.  These will not be considered already tuned.",  np),
+                MessageBox.Show(string.Format("Found {0} partially (or invalidly) tuned tiles.  " +
+                                              "These will not be considered already tuned.",  np),
                                 "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
+
+            Console.WriteLine(string.Format("found {0} already tuned and {1} partial/invalid tiles in {2}",
+                                            alreadyTuned.Count, np, GetFinalOutputDirectory()));
             
             remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
 
@@ -222,18 +231,28 @@ namespace RockCollect.Stages
             return GetTileJSON(tileCol, tileRow);
         }
 
-        public bool ValidTileJSON(int tileIndex)
+        public bool ValidTileJSON(int tileIndex, Action<string> reason = null)
         {
-            return ValidTileJSON(GetTileJSON(tileIndex));
+            return ValidTileJSON(GetTileJSON(tileIndex), reason);
         }
 
-        public bool ValidTileJSON(string file)
+        public bool ValidTileJSON(string file, Action<string> reason = null)
         {
-            if (!File.Exists(file)) return false;
-            try {
+            if (!File.Exists(file))
+            {
+                if (reason != null) reason("file not found");
+                return false;
+            }
+            try
+            {
                 var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(file));
-                return ValidTileJSON(data.Data);
-            } catch (Exception) { return false; }
+                return ValidTileJSON(data.Data, reason);
+            }
+            catch (Exception ex)
+            {
+                if (reason != null) reason($"error parsing JSON: {ex.Message}");
+                return false;
+            }
         }
 
         public bool ValidTileJSON(Dictionary<string, string> dictionary, Action<string> reason = null)

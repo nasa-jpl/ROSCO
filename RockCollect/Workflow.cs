@@ -44,7 +44,7 @@ namespace RockCollect
 
         public bool AtValidStage() { return ActiveStageIndex >= 0 && ActiveStageIndex < Stages.Count; }
 
-        public void SetOutputDirectory(string dir)
+        public void SetFinalOutputDirectory(string dir)
         {
             if (!AtFirstStage())
             {
@@ -101,33 +101,30 @@ namespace RockCollect
 
                     if (numExisting > 0)
                     {
-                        DialogResult result =
-                            MessageBox.Show(string.Format("Use {0} existing tile settings at {1}?",
-                                                          numExisting, FinalOutputDirectory),
-                                            "Use Existing Tiles",
-                                            MessageBoxButtons.YesNo,
-                                            MessageBoxIcon.Question); 
+                        string savePath = null;
+                        for (int i = 0; savePath == null; i++)
+                        {
+                            savePath = string.Format("{0}_SAVE_{1}", FinalOutputDirectory, i);
+                            if (Directory.Exists(savePath) || File.Exists(savePath)) savePath = null;
+                        }
 
+                        DialogResult result =
+                            MessageBox.Show(string.Format("Use {0} existing tile settings at {1}?  " +
+                                                          "If not they will be moved to {2}.",
+                                                          numExisting, FinalOutputDirectory, savePath),
+                                            "Use Existing Tiles", MessageBoxButtons.YesNo, MessageBoxIcon.Question); 
                         if (result == DialogResult.No)
                         {
-                            for (int i = 0; true; i++)
-                            {
-                                string savePath = string.Format("{0}_SAVE_{1}", FinalOutputDirectory, i);
-                                if (!Directory.Exists(savePath) && !File.Exists(savePath))
-                                {
-                                    Directory.Move(FinalOutputDirectory, savePath);
-                                    Directory.CreateDirectory(FinalOutputDirectory);
-                                    MessageBox.Show(string.Format("Archived existing tile settings from {0} to {1}",
-                                                                  FinalOutputDirectory, savePath),
-                                                    "Moved Existing Tiles");
-                                    break;
-                                }
-                            }
+                            Directory.Move(FinalOutputDirectory, savePath);
+                            Directory.CreateDirectory(FinalOutputDirectory);
+                            MessageBox.Show(string.Format("Archived existing tile settings from {0} to {1}.",
+                                                          FinalOutputDirectory, savePath),
+                                            "Moved Existing Tiles");
                         }
                     }
                 }
 
-                Console.WriteLine("saving per-tile settings and results at \"{0}\"", FinalOutputDirectory);
+                Console.WriteLine("saving per-tile settings at \"{0}\"", FinalOutputDirectory);
             }
 
             Stage nextStage = null;
