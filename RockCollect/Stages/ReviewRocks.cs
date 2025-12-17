@@ -99,7 +99,7 @@ namespace RockCollect.Stages
             if (File.Exists(tileJson))
             {
                 var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
-                settings.Confidence = float.Parse(existing["CONFIDENCE"]);
+                GetFloatSetting(existing, "CONFIDENCE", v => { settings.Confidence = v; });
             }
 
             UpdateDetections(out RockDetector.DetectionResults results, out DetectionsBitmap);

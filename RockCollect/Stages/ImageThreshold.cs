@@ -88,8 +88,8 @@ namespace RockCollect.Stages
             if (File.Exists(tileJson))
             {
                 var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
-                Gamma = float.Parse(existing["GAMMA"]);
-                ThresholdOverride = int.Parse(existing["GAMMA_THRESHOLD_OVERRIDE"]);
+                GetFloatSetting(existing, "GAMMA", v => { Gamma = v; });
+                GetIntSetting(existing, "GAMMA_THRESHOLD_OVERRIDE", v => { ThresholdOverride = v; });
             }
                 
             UpdateShadowAndOverlay();

@@ -35,7 +35,33 @@ namespace RockCollect
         public Action OnTeardownStatusUI;
 
         public enum Dir { Stage, Input, Output, Debug, FinalOutput};
-        
+
+        public static bool GetFloatSetting(Dictionary<string, string> settings, string key, Action<float> action)
+        {
+            if (!settings.ContainsKey(key)) return false;
+
+            float v;
+            try { v = float.Parse(settings[key]); }
+            catch (FormatException) { return false; }
+
+            action(v);
+
+            return true;
+        }
+
+        public static bool GetIntSetting(Dictionary<string, string> settings, string key, Action<int> action)
+        {
+            if (!settings.ContainsKey(key)) return false;
+
+            int v;
+            try { v = int.Parse(settings[key]); }
+            catch (FormatException) { return false; }
+
+            action(v);
+
+            return true;
+        }
+
         public virtual void Init(Logger log,  string stageDirectory, string finalOutputDirectory, Workflow workflow)
         {
             Log = log;
