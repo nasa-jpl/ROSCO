@@ -99,7 +99,8 @@ namespace RockCollect.Stages
             if (File.Exists(tileJson))
             {
                 var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
-                GetFloatSetting(existing, "CONFIDENCE", v => { settings.Confidence = v; });
+                GetFloatSetting(existing, "CONFIDENCE", RockDetector.MIN_VALID_CONFIDENCE,
+                                RockDetector.MAX_VALID_CONFIDENCE, v => { settings.Confidence = v; });
             }
 
             UpdateDetections(out RockDetector.DetectionResults results, out DetectionsBitmap);
@@ -117,9 +118,7 @@ namespace RockCollect.Stages
                     ComparisonDetectionsBitmap = UpdateDetectionsBitmap(comparisonDetections.outRocks);
                 }
             }
-            catch
-            {
-            }
+            catch { }
 
             return true;
         }
@@ -512,17 +511,11 @@ namespace RockCollect.Stages
             Console.WriteLine(string.Format("saving detection settings for tile to \"{0}\" and \"{1}\"",
                                             outJSONPath, outParamsPath));
 
+            //since this is the last stage, instead of writing "output.json"
+            //to the stage output directory, typically under Sessions/
+            //WriteOutputJSON() here is specialized to write the tile settings to Tile_CCCCCC_RRRRRR.json
+            //in the final output directory, typically under ImgeOutput/
             if (!WriteOutputJSON()) return false;
-            
-            string tileJson = GetTileJSON();
-            if (File.Exists(tileJson))
-            {
-                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
-                existing["CONFIDENCE"] = settings.Confidence.ToString();
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string jsonString = JsonSerializer.Serialize(existing, existing.GetType(), options);
-                File.WriteAllText(tileJson, jsonString);
-            }
             
             RockDetector.INSETTINGS inSettings = RockDetector.CreateInSettings(settings);
             if (0 == RockDetector.write_param_file(outParamsPath, ref inSettings)) return false;

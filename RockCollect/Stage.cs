@@ -36,7 +36,8 @@ namespace RockCollect
 
         public enum Dir { Stage, Input, Output, Debug, FinalOutput};
 
-        public static bool GetFloatSetting(Dictionary<string, string> settings, string key, Action<float> action)
+        public static bool GetFloatSetting(Dictionary<string, string> settings, string key, float min, float max,
+                                           Action<float> action)
         {
             if (!settings.ContainsKey(key)) return false;
 
@@ -44,18 +45,23 @@ namespace RockCollect
             try { v = float.Parse(settings[key]); }
             catch (FormatException) { return false; }
 
+            if (v < min || v > max) return false;
+
             action(v);
 
             return true;
         }
 
-        public static bool GetIntSetting(Dictionary<string, string> settings, string key, Action<int> action)
+        public static bool GetIntSetting(Dictionary<string, string> settings, string key, int min, int max,
+                                         Action<int> action)
         {
             if (!settings.ContainsKey(key)) return false;
 
             int v;
             try { v = int.Parse(settings[key]); }
             catch (FormatException) { return false; }
+
+            if (v < min || v > max) return false;
 
             action(v);
 

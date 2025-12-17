@@ -111,11 +111,16 @@ namespace RockCollect.Stages
             if (File.Exists(tileJson))
             {
                 var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
-                GetFloatSetting(existing, "MINSHADOWAREA", v => { settings.MinShadowArea = v; });
-                GetFloatSetting(existing, "MAXSHADOWAREA", v => { settings.MaxShadowArea = v; });
-                GetFloatSetting(existing, "SHADOWASPECT", v => { settings.ShadowAspect = v; });
-                GetFloatSetting(existing, "MEANGRADIENT", v => { settings.MeanGradient = v; });
-                GetFloatSetting(existing, "MINSHADOWSPLIT", v => { settings.MinShadowSplit = v; });
+                GetFloatSetting(existing, "MINSHADOWAREA", RockDetector.MIN_VALID_MIN_SHADOW_AREA,
+                                RockDetector.MAX_VALID_MIN_SHADOW_AREA, v => { settings.MinShadowArea = v; });
+                GetFloatSetting(existing, "MAXSHADOWAREA", RockDetector.MIN_VALID_MAX_SHADOW_AREA,
+                                RockDetector.MAX_VALID_MAX_SHADOW_AREA, v => { settings.MaxShadowArea = v; });
+                GetFloatSetting(existing, "SHADOWASPECT", RockDetector.MIN_VALID_ASPECT, RockDetector.MAX_VALID_ASPECT,
+                                v => { settings.ShadowAspect = v; });
+                GetFloatSetting(existing, "MEANGRADIENT", RockDetector.MIN_VALID_MEAN_GRADIENT,
+                                RockDetector.MAX_VALID_MEAN_GRADIENT, v => { settings.MeanGradient = v; });
+                GetFloatSetting(existing, "MINSHADOWSPLIT", RockDetector.MIN_VALID_SPLIT, RockDetector.MAX_VALID_SPLIT,
+                                v => { settings.MinShadowSplit = v; });
             }
 
             UpdateDetections(out RockDetector.DetectionResults results);
@@ -157,8 +162,7 @@ namespace RockCollect.Stages
         {
             results = null;
 
-            if (string.IsNullOrEmpty(TilePath))
-                return false;
+            if (string.IsNullOrEmpty(TilePath)) return false;
 
             results = new RockDetector.DetectionResults("Shadows", TileImage.Width, TileImage.Height);
 

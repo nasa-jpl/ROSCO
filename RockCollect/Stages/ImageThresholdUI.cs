@@ -73,14 +73,14 @@ namespace RockCollect.Stages
 
         int GammaToTrackBarValue(float gamma)
         {
-            float curStageGammaPct = (gamma - ImageThreshold.MIN_GAMMA) / (ImageThreshold.MAX_GAMMA - ImageThreshold.MIN_GAMMA);
+            float curStageGammaPct = (gamma - RockDetector.MIN_VALID_GAMMA) / (RockDetector.MAX_VALID_GAMMA - RockDetector.MIN_VALID_GAMMA);
             return (int)(curStageGammaPct * (trackBarGamma.Maximum - trackBarGamma.Minimum) + trackBarGamma.Minimum);
         }
 
         float TrackBarValueToGamma(int trackbarVal)
         {
             float trackbarPct = (trackbarVal - trackBarGamma.Minimum) / (float)(trackBarGamma.Maximum - trackBarGamma.Minimum);
-            return trackbarPct * (ImageThreshold.MAX_GAMMA - ImageThreshold.MIN_GAMMA) + ImageThreshold.MIN_GAMMA;
+            return trackbarPct * (RockDetector.MAX_VALID_GAMMA - RockDetector.MIN_VALID_GAMMA) + RockDetector.MIN_VALID_GAMMA;
         }
 
         private void ImageThresholdUI_Load(object sender, EventArgs e)

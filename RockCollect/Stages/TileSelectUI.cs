@@ -145,7 +145,7 @@ namespace RockCollect.Stages
         {
             if (Stage.GetActiveTileAddress(out int x, out int y))
             {
-                int idx = Stage.GetClosestTunedTile(Stage.GetTileIndex(x, y), (i) => File.Exists(Stage.GetTileJSON(i)));
+                int idx = Stage.GetClosestTunedTile(Stage.GetTileIndex(x, y), (i) => Stage.ValidTileJSON(i));
                 if (idx >= 0)
                 {
                     Stage.CopySettings(idx, Stage.GetActiveTile(), confirm: true);

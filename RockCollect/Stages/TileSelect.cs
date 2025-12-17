@@ -78,15 +78,24 @@ namespace RockCollect.Stages
             
             //cull out already tuned tiles
             var alreadyTuned = new HashSet<int>();
+            int np = 0;
             for (int y = 0; y < TilesVertical; y++)
             {
                 for (int x = 0; x < TilesHorizontal; x++)
                 {
-                    if (File.Exists(GetTileJSON(x, y)))
+                    string file = GetTileJSON(x, y);
+                    if (File.Exists(file))
                     {
-                        alreadyTuned.Add(GetTileIndex(x, y));
+                        if (ValidTileJSON(file)) alreadyTuned.Add(GetTileIndex(x, y));
+                        else np++;
                     }
                 }
+            }
+
+            if (np > 0)
+            {
+                MessageBox.Show(string.Format("Found {0} partially (or invalidly) tuned tiles.  These will not be considered already tuned.",  np),
+                                "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
             
             remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
@@ -107,51 +116,38 @@ namespace RockCollect.Stages
 
         public override bool SaveOutput()
         {
-            if (base.SaveOutput())
-            {
-                if (ActiveImage == null)
-                {
-                    return false;
-                }
+            if (!base.SaveOutput()) return false;
+            
+            if (ActiveImage == null) return false;
                 
-                if (string.IsNullOrEmpty(ImagePath))
-                {
-                    return false;
-                }
+            if (string.IsNullOrEmpty(ImagePath)) return false;
 
-                if (ActiveTile == -1)
-                {
-                    return false;
-                }
+            if (ActiveTile == -1) return false;
 
-                string rawTilePath = Path.Combine(GetDirectory(Dir.Output), "rawtile.pgm");
-                GDALSerializer.Save(ActiveImage, rawTilePath, null);
+            string rawTilePath = Path.Combine(GetDirectory(Dir.Output), "rawtile.pgm");
+            GDALSerializer.Save(ActiveImage, rawTilePath, null);
+            
+            string tilePath = Path.Combine(GetDirectory(Dir.Output), "tile.pgm");
+            tilePath = CreateMonoImage(rawTilePath, tilePath, 0); //RED band //TODO: expose the multichannel to single channel approach
 
-                string tilePath = Path.Combine(GetDirectory(Dir.Output), "tile.pgm");
-                tilePath = CreateMonoImage(rawTilePath, tilePath, 0); //RED band //TODO: expose the multichannel to single channel approach
-               
-
-                InputToOutput("IMAGE_PATH");
-                InputToOutput("COMPARISON_ROCKLIST");
-                InputToOutput("GSD");
-                InputToOutput("AZIMUTH");
-                InputToOutput("INCIDENCE");
-
-                GetActiveTileAddress(out int x, out int y);
-                this.outData.Data.Add("TILE_PATH", tilePath);
-                this.outData.Data.Add("TILE_INDEX", ActiveTile.ToString());
-                this.outData.Data.Add("TILE_COL", x.ToString());
-                this.outData.Data.Add("TILE_ROW", y.ToString());
-                this.outData.Data.Add("TILE_GROUP", GetActiveTileGroup());
-                this.outData.Data.Add("TILES_HORIZONTAL", TilesHorizontal.ToString());
-                this.outData.Data.Add("TILES_VERTICAL", TilesVertical.ToString());
-
-                if (!WriteOutputJSON()) return false;
-
-                return true;
-            }
-
-            return false;
+            InputToOutput("IMAGE_PATH");
+            InputToOutput("COMPARISON_ROCKLIST");
+            InputToOutput("GSD");
+            InputToOutput("AZIMUTH");
+            InputToOutput("INCIDENCE");
+            
+            GetActiveTileAddress(out int x, out int y);
+            this.outData.Data.Add("TILE_PATH", tilePath);
+            this.outData.Data.Add("TILE_INDEX", ActiveTile.ToString());
+            this.outData.Data.Add("TILE_COL", x.ToString());
+            this.outData.Data.Add("TILE_ROW", y.ToString());
+            this.outData.Data.Add("TILE_GROUP", GetActiveTileGroup());
+            this.outData.Data.Add("TILES_HORIZONTAL", TilesHorizontal.ToString());
+            this.outData.Data.Add("TILES_VERTICAL", TilesVertical.ToString());
+            
+            if (!WriteOutputJSON()) return false;
+            
+            return true;
         }
 
         private string CreateMonoImage(string tilePath, string monoPath, int bandSelect)
@@ -226,6 +222,28 @@ namespace RockCollect.Stages
             return GetTileJSON(tileCol, tileRow);
         }
 
+        public bool ValidTileJSON(int tileIndex)
+        {
+            return ValidTileJSON(GetTileJSON(tileIndex));
+        }
+
+        public bool ValidTileJSON(string file)
+        {
+            if (!File.Exists(file)) return false;
+            try {
+                var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(file));
+                return ValidTileJSON(data.Data);
+            } catch (Exception) { return false; }
+        }
+
+        public bool ValidTileJSON(Dictionary<string, string> dictionary, Action<string> reason = null)
+        {
+            string r = RockDetector.Settings.CheckSettings(dictionary);
+            if (string.IsNullOrEmpty(r)) return true;
+            if (reason != null) reason(r);
+            return false;
+        }
+
         public int CountRunnableTiles()
         {
             var tsd = TileShapeData;
@@ -249,7 +267,7 @@ namespace RockCollect.Stages
             {
                 for (int x = 0; x < TilesHorizontal; x++)
                 {
-                    if (File.Exists(GetTileJSON(x, y))) n++;
+                    if (ValidTileJSON(GetTileJSON(x, y))) n++;
                 }
             }
             return n;
@@ -264,7 +282,7 @@ namespace RockCollect.Stages
                 for (int x = 0; x < TilesHorizontal; x++)
                 {
                     string file = GetTileJSON(x, y);
-                    if (File.Exists(file))
+                    if (ValidTileJSON(file))
                     {
                         DateTime dt = File.GetLastWriteTimeUtc(file);
                         if ((mostRecent == null || dt > mostRecent) && (before == null || dt < before))
@@ -278,7 +296,7 @@ namespace RockCollect.Stages
             return ret;
         }
 
-        public void CopySettings(int fromIndex, int toIndex, string subdir = null, bool confirm = false)
+        public bool CopySettings(int fromIndex, int toIndex, string subdir = null, bool confirm = false)
         {
             GetTileAddress(fromIndex, out int fromX, out int fromY);
             GetTileAddress(toIndex, out int toX, out int toY);
@@ -289,7 +307,7 @@ namespace RockCollect.Stages
                     string.Format("Invalid tile to copy from (col={0}, row={1}), must be in range (0, 0) to ({2}, {3})",
                                   fromX, fromY, TilesHorizontal - 1, TilesVertical - 1),
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                return false;
             }
 
             if (toX < 0 || toY < 0 || toX >= TilesHorizontal || toY >= TilesVertical)
@@ -298,7 +316,7 @@ namespace RockCollect.Stages
                     string.Format("Invalid tile to copy to (col={0}, row={1}), must be in range (0, 0) to ({2}, {3})",
                                   toX, toY, TilesHorizontal - 1, TilesVertical - 1),
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
+                return false;
             }
 
             if (confirm)
@@ -306,14 +324,15 @@ namespace RockCollect.Stages
                 var result = MessageBox.Show(
                     string.Format("Copy settings for tile ({0}, {1}) to tile ({2}, {3})?", fromX, fromY, toX, toY),
                     "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
-                if (result == DialogResult.Cancel) return;
+                if (result == DialogResult.Cancel) return false;
             }
 
             var tsd = TileShapeData;
+            string toGrp = null;
             if (tsd != null && (tsd[fromIndex] != null || tsd[toIndex] != null))
             {
                 string fromGrp = tsd[fromIndex] != null ? tsd[fromIndex].grp : null;
-                string toGrp = tsd[toIndex] != null ? tsd[toIndex].grp : null;
+                toGrp = tsd[toIndex] != null ? tsd[toIndex].grp : null;
                 if (fromGrp != toGrp)
                 {
                     var result = MessageBox.Show(
@@ -321,7 +340,7 @@ namespace RockCollect.Stages
                                       "settings to tile ({3}, {4}) in shape file group {5}?",
                                       fromX, fromY, fromGrp, toX, toY, toGrp),
                         "Confirmation", MessageBoxButtons.OKCancel, MessageBoxIcon.Question);
-                    if (result == DialogResult.Cancel) return;
+                    if (result == DialogResult.Cancel) return false;
                 }
             }
 
@@ -330,6 +349,15 @@ namespace RockCollect.Stages
 
             var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(srcJSON));
 
+            string reason = null;
+            if (!ValidTileJSON(data.Data, (r) => { reason = r; }))
+            {
+                MessageBox.Show(
+                    string.Format("Invalid tile to copy from (col={0}, row={1}): {2}", fromX, fromY, reason),
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+
             data.Data.Remove("TILE_PATH");
 
             data.Data["COPIED_FROM"] = GetTileOutputName(fromIndex) + ".json";
@@ -337,6 +365,8 @@ namespace RockCollect.Stages
             data.Data["TILE_COL"] = toX.ToString();
             data.Data["TILE_ROW"] = toY.ToString();
 
+            if (toGrp != null) data.Data["TILE_GROUP"] = toGrp;
+            
             if (!string.IsNullOrEmpty(subdir))
             {
                 string dir = Path.Combine(GetDirectory(Dir.FinalOutput), subdir);
@@ -347,9 +377,11 @@ namespace RockCollect.Stages
 
             var writeJSONOpts = new JsonSerializerOptions { WriteIndented = true };
             File.WriteAllText(dstJSON, JsonSerializer.Serialize(data, data.GetType(), writeJSONOpts));
+
+            return true;
         }
 
-        public int GetClosestTunedTile(int tileIndex, Func<int, bool> loaded)
+        public int GetClosestTunedTile(int tileIndex, Func<int, bool> alreadyTuned)
         {
             GetTileAddress(tileIndex, out int x, out int y);
 
@@ -376,7 +408,7 @@ namespace RockCollect.Stages
                     {
                         if (nx < 0 || nx >= TilesHorizontal) continue;
                         ni = GetTileIndex(nx, ny);
-                        if (!loaded(ni)) ni = -1;
+                        if (!alreadyTuned(ni)) ni = -1;
                         else if (tsd != null && (tsd[ni] == null || tsd[ni].grp != grp)) ni = -1;
                     }
                 }
@@ -388,7 +420,7 @@ namespace RockCollect.Stages
                     {
                         if (ny < 0 || ny >= TilesVertical) continue;
                         ni = GetTileIndex(nx, ny);
-                        if (!loaded(ni)) ni = -1;
+                        if (!alreadyTuned(ni)) ni = -1;
                         else if (tsd != null && (tsd[ni] == null || tsd[ni].grp != grp)) ni = -1;
                     }
                 }
@@ -417,7 +449,7 @@ namespace RockCollect.Stages
                 for (int x = 0; x < TilesHorizontal; x++)
                 {
                     string tileJSON = GetTileJSON(x, y);
-                    if (File.Exists(tileJSON))
+                    if (ValidTileJSON(tileJSON))
                     {
                         Console.WriteLine(string.Format("loading settings for tile at col {0}, row {1} from {2}",
                                                         x, y, tileJSON));
@@ -430,6 +462,7 @@ namespace RockCollect.Stages
                                 string.Format("JSON settings {0} for tile ({1}, 2}) have TILE_COL={3}, TILE_ROW={4}",
                                               tileJSON, x, y, readX, readY),
                                 "Tile Settings Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            return;
                         }
                         var settings = new RockDetector.Settings(data.Data);
                         int idx = GetTileIndex(x, y);
@@ -478,8 +511,7 @@ namespace RockCollect.Stages
                         System.Windows.Forms.MessageBox.Show(
                             string.Format("group \"{0}\" has 0 already tuned tiles but {1} tiles to run",
                                           grp, runPerGroup[grp]),
-                            "Shape File Error", MessageBoxButtons.OK, MessageBoxIcon.Error
-                        );
+                            "Shape File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
@@ -507,8 +539,8 @@ namespace RockCollect.Stages
 //                            Console.WriteLine(string.Format("copying settings for tuned tile at col {0}, row {1} " +
 //                                                            "for tile at col {2}, row {3}{4}", nx, ny, x, y, grpMsg));
                             inSettings[idx] = inSettings[ni];
-                            CopySettings(ni, idx, "copied_settings");
-                            nc++;
+                            if (CopySettings(ni, idx, "copied_settings")) nc++;
+                            else nf++;
                         }
                         else
                         {
@@ -523,9 +555,16 @@ namespace RockCollect.Stages
 
             Console.WriteLine(string.Format("copied settings for {0} un-tuned tiles from nearest tuned neighbor{1}",
                                             nc, tsd != null ? " in same shape file group" : ""));
-            Console.WriteLine(string.Format("failed to copy settings for {0} un-tuned tiles from any tuned neighbor{1}",
-                                            nf, tsd != null ? " in same shape file group" : ""));
 
+            if (nf > 0)
+            {
+                var result = MessageBox.Show(
+                    string.Format("Failed to copy settings for {0} un-tuned tiles from any tuned neighbor{1}.  " +
+                                  "Run remaining tiles anyway?", nf, tsd != null ? " in same shape file group" : ""),
+                    "Insufficient Tuned Tiles", MessageBoxButtons.YesNo, MessageBoxIcon.Error);
+                if (result == DialogResult.No) return;
+            }
+            
             int nr = 0;
             for (int y = 0; y < TilesVertical; y++)
             {
@@ -538,9 +577,12 @@ namespace RockCollect.Stages
                 }
             }
 
-            Console.WriteLine(string.Format("running rock detector on {0} runnable of {1} total tiles, " +
-                                            "saving resulting rocklist to \"{2}\"", nr, numTiles, fileName));
-
+            var res = MessageBox.Show(
+                string.Format("Running rock detector on {0} runnable of {1} total tiles, " +
+                              "saving resulting rocklist to \"{2}\".", nr, numTiles, fileName),
+                "Running Rock Detector", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
+            if (res == DialogResult.Cancel) return;
+            
             RockDetector.detect_per_tile_settings(ImagePath, fileName, numTiles, inSettings);
             //TODO: warn
         }
@@ -682,37 +724,24 @@ namespace RockCollect.Stages
 
         public bool AutoChooseTile()
         {
-            if (ActiveTile >= 0 && !File.Exists(GetTileJSON(ActiveTile)))
+            if (ActiveTile >= 0 && !ValidTileJSON(ActiveTile))
             {
-                if (skippedTiles == null)
-                {
-                    skippedTiles = new List<int>();
-                }
-
+                if (skippedTiles == null) skippedTiles = new List<int>();
                 skippedTiles.Add(ActiveTile);
             }
-
+        
             ClearTile();
 
-            if (remainingTilesToTune == null || remainingTilesToTune.Count == 0)
-            {
-                return false;
-            }
+            if (remainingTilesToTune == null || remainingTilesToTune.Count == 0) return false;
             
             for (int counter = 0; counter < Skips; counter++)
             {
-                if (skippedTiles == null)
-                {
-                    skippedTiles = new List<int>();
-                }
+                if (skippedTiles == null) skippedTiles = new List<int>();
                 
                 skippedTiles.Add(remainingTilesToTune.First());
                 
                 remainingTilesToTune.RemoveAt(0);
-                if (remainingTilesToTune.Count == 0)
-                {
-                    return false;
-                }
+                if (remainingTilesToTune.Count == 0) return false;
             }
             
             int idx = remainingTilesToTune.First();
@@ -741,8 +770,8 @@ namespace RockCollect.Stages
             if (File.Exists(tileJSON))
             {
                 MessageBox.Show(
-                    string.Format("Re-tuning tile ({0}, {1}), will start with existing settings from {2}",
-                                  tileCol, tileRow, tileJSON),
+                    string.Format("Re-tuning tile ({0}, {1}), will start with {2}settings from {3}",
+                                  tileCol, tileRow, ValidTileJSON(tileJSON) ? "" : "partial ", tileJSON),
                     "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
 
