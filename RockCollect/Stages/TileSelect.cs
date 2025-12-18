@@ -16,7 +16,7 @@ namespace RockCollect.Stages
         public const int TILEOVERLAP = 50;
 
         protected List<int> remainingTilesToTune;
-        protected List<int> skippedTiles;
+        protected HashSet<int> skippedTiles = new HashSet<int>();
 
         static public readonly float DATA_VERSION = 0.1f;
 
@@ -27,7 +27,7 @@ namespace RockCollect.Stages
         int TilesVertical = 0;
         int ActiveTile = -1;
         Image ActiveImage;
-        int Skips;
+        int Skips = 0;
 
         class ShapeData
         {
@@ -74,11 +74,9 @@ namespace RockCollect.Stages
                 GetNumTiles(WidthPixels, HeightPixels, out TilesHorizontal, out TilesVertical);
             }
             
-            remainingTilesToTune = Enumerable.Range(0, TilesHorizontal * TilesVertical).ToList();
-            
             //cull out already tuned tiles
             var alreadyTuned = new HashSet<int>();
-            int np = 0;
+            var partiallyTuned = new HashSet<string>();
             for (int y = 0; y < TilesVertical; y++)
             {
                 for (int x = 0; x < TilesHorizontal; x++)
@@ -91,29 +89,45 @@ namespace RockCollect.Stages
                         else
                         {
                             Console.WriteLine($"partial/invalid tile JSON \"{file}\": {reason}");
-                            np++;
+                            partiallyTuned.Add(file);
                         }
                     }
                 }
             }
 
-            if (np > 0)
+            if (partiallyTuned.Count > 0)
             {
-                MessageBox.Show(string.Format("Found {0} partially (or invalidly) tuned tiles.  " +
-                                              "These will not be considered already tuned.",  np),
-                                "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                string dir = Path.Combine(GetFinalOutputDirectory(), "partial_settings");
+                var result = MessageBox.Show(
+                    string.Format("Found {0} partially or invalidly tuned tiles.  " +
+                                  "See console logs for details.  " +
+                                  "These will not be considered already tuned, but if you re-tune them, " +
+                                  "any valid settings they contain will be used as starting values.  " +
+                                  "Do you want to move these {0} files to {1} so they will be fully ignored?",
+                                  partiallyTuned.Count, dir),
+                    "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                
+                if (result == DialogResult.Yes)
+                {
+                    if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+                    foreach (string fromFile in partiallyTuned)
+                    {
+                        string toFile = Path.Combine(dir, Path.GetFileName(fromFile));
+                        if (File.Exists(toFile)) File.Delete(toFile);
+                        File.Move(fromFile, toFile);
+                    }
+                }
             }
 
             Console.WriteLine(string.Format("found {0} already tuned and {1} partial/invalid tiles in {2}",
-                                            alreadyTuned.Count, np, GetFinalOutputDirectory()));
+                                            alreadyTuned.Count, partiallyTuned.Count, GetFinalOutputDirectory()));
             
-            remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
+            skippedTiles.RemoveWhere(tile => alreadyTuned.Contains(tile));
 
-            if (skippedTiles != null)
-            {
-                skippedTiles = skippedTiles.Where(tile => !alreadyTuned.Contains(tile)).ToList();
-            }
-            
+            remainingTilesToTune = Enumerable.Range(0, TilesHorizontal * TilesVertical).ToList();
+            remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
+            remainingTilesToTune = remainingTilesToTune.Where(tile => !skippedTiles.Contains(tile)).ToList();
+
             if (inData.Data.ContainsKey("SHAPE_FILE") && !string.IsNullOrEmpty(inData.Data["SHAPE_FILE"]) &&
                 TileShapeData == null)
             {
@@ -388,7 +402,7 @@ namespace RockCollect.Stages
             
             if (!string.IsNullOrEmpty(subdir))
             {
-                string dir = Path.Combine(GetDirectory(Dir.FinalOutput), subdir);
+                string dir = Path.Combine(GetFinalOutputDirectory(), subdir);
                 if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
                 string dstName = GetTileOutputName(toIndex) + ".json";
                 dstJSON = Path.Combine(dir, dstName);
@@ -461,7 +475,7 @@ namespace RockCollect.Stages
             var writeJSONOpts = new JsonSerializerOptions { WriteIndented = true };
 
             Console.WriteLine(string.Format("loading settings for already-tuned tiles from \"{0}\"",
-                                            GetDirectory(Dir.FinalOutput)));
+                                            GetFinalOutputDirectory()));
             int numLoaded = 0;
             for (int y = 0; y < TilesVertical; y++)
             {
@@ -630,11 +644,6 @@ namespace RockCollect.Stages
 
         public int GetSkippedTiles()
         {
-            if (skippedTiles == null)
-            {
-                return 0;
-            }
-
             return skippedTiles.Count();
         }
 
@@ -743,32 +752,38 @@ namespace RockCollect.Stages
 
         public bool AutoChooseTile()
         {
-            if (ActiveTile >= 0 && !ValidTileJSON(ActiveTile))
+            if (remainingTilesToTune.Count == 0)
             {
-                if (skippedTiles == null) skippedTiles = new List<int>();
-                skippedTiles.Add(ActiveTile);
+                ClearTile();
+                return false;
             }
-        
-            ClearTile();
 
-            if (remainingTilesToTune == null || remainingTilesToTune.Count == 0) return false;
-            
-            for (int counter = 0; counter < Skips; counter++)
+            int newTile = -1;
+            int oldIdx = ActiveTile >= 0 ? remainingTilesToTune.IndexOf(ActiveTile) : -1;
+            if (oldIdx < 0) newTile = remainingTilesToTune[0];
+            else
             {
-                if (skippedTiles == null) skippedTiles = new List<int>();
+                int skip = Skips > 0 ? Skips : 0;
+                int newIdx = oldIdx + skip + 1;
                 
-                skippedTiles.Add(remainingTilesToTune.First());
+                if (newIdx >= remainingTilesToTune.Count)
+                {
+                    ClearTile();
+                    return false;
+                }
                 
-                remainingTilesToTune.RemoveAt(0);
-                if (remainingTilesToTune.Count == 0) return false;
+                newTile = remainingTilesToTune[newIdx];
+                
+                skippedTiles.Add(remainingTilesToTune[oldIdx]);
+                
+                for (int i = 0; i < Skips; i++) skippedTiles.Add(remainingTilesToTune[oldIdx + 1 + i]);
+                
+                remainingTilesToTune.RemoveRange(oldIdx, 1 + skip);
             }
-            
-            int idx = remainingTilesToTune.First();
-            remainingTilesToTune.RemoveAt(0);
-            
-            GetTileAddress(idx, out int tileCol, out int tileRow);
 
-            ChooseTile(tileCol, tileRow);
+            GetTileAddress(newTile, out int tileCol, out int tileRow);
+
+            ChooseTile(tileCol, tileRow); //sets ActiveTile
 
             return true;
         }

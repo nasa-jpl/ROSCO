@@ -77,8 +77,6 @@ namespace RockCollect.Stages
                 Stage.GetActiveTileResolution(out int widthPixels, out int heightPixels);
                 this.labelSelectedTilePixelsVal.Text = string.Format("{0} x {1}", widthPixels, heightPixels);
 
-                this.labelRemainingVal.Text = Stage.GetRemainingTilesToTune().ToString();
-                
                 this.labelSkippedTiles.Text = Stage.GetSkippedTiles().ToString();
 
                 this.labelGroupVal.Text = Stage.GetActiveTileGroup();

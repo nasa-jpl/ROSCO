@@ -302,18 +302,18 @@ namespace RockCollect.Stages
             if (!WriteOutputJSON()) return false;
             
             string tileJson = GetTileJSON();
-            if (File.Exists(tileJson))
-            {
-                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
-                existing["MINSHADOWAREA"] = settings.MinShadowArea.ToString();
-                existing["MAXSHADOWAREA"] = settings.MaxShadowArea.ToString();
-                existing["SHADOWASPECT"] = settings.ShadowAspect.ToString();
-                existing["MEANGRADIENT"] = settings.MeanGradient.ToString();
-                existing["MINSHADOWSPLIT"] = settings.MinShadowSplit.ToString();
-                var options = new JsonSerializerOptions { WriteIndented = true };
-                string jsonString = JsonSerializer.Serialize(existing, existing.GetType(), options);
-                File.WriteAllText(tileJson, jsonString);
-            }
+            StageData tileData =
+                File.Exists(tileJson) ? JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson))
+                : new StageData();
+
+            tileData.Data["MINSHADOWAREA"] = settings.MinShadowArea.ToString();
+            tileData.Data["MAXSHADOWAREA"] = settings.MaxShadowArea.ToString();
+            tileData.Data["SHADOWASPECT"] = settings.ShadowAspect.ToString();
+            tileData.Data["MEANGRADIENT"] = settings.MeanGradient.ToString();
+            tileData.Data["MINSHADOWSPLIT"] = settings.MinShadowSplit.ToString();
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            File.WriteAllText(tileJson, JsonSerializer.Serialize(tileData, tileData.GetType(), options));
 
             return true;
         }
