@@ -128,8 +128,17 @@ namespace RockCollect.Stages
             remainingTilesToTune = remainingTilesToTune.Where(tile => !alreadyTuned.Contains(tile)).ToList();
             remainingTilesToTune = remainingTilesToTune.Where(tile => !skippedTiles.Contains(tile)).ToList();
 
-            if (inData.Data.ContainsKey("SHAPE_FILE") && !string.IsNullOrEmpty(inData.Data["SHAPE_FILE"]) &&
-                TileShapeData == null)
+            if (TileShapeData != null)
+            {
+                var tilesToVisit = new HashSet<int>();
+                int nt = TilesHorizontal * TilesVertical;
+                for (int i = 0; i < nt; i++)
+                {
+                    if (TileShapeData[i] != null && TileShapeData[i].visit) tilesToVisit.Add(i);
+                }
+                remainingTilesToTune = remainingTilesToTune.Where(tile => tilesToVisit.Contains(tile)).ToList();
+            }
+            else if (inData.Data.ContainsKey("SHAPE_FILE") && !string.IsNullOrEmpty(inData.Data["SHAPE_FILE"]))
             {
                 ParseShapeFile(inData.Data["SHAPE_FILE"]);
             }
