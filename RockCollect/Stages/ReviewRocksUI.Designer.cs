@@ -148,9 +148,9 @@
             this.groupBox1.Controls.Add(this.radioButtonTheirs);
             this.groupBox1.Controls.Add(this.radioButtonYours);
             this.groupBox1.Location = new System.Drawing.Point(590, 122);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox1.Size = new System.Drawing.Size(222, 170);
             this.groupBox1.TabIndex = 37;
             this.groupBox1.TabStop = false;
@@ -160,7 +160,7 @@
             // 
             this.radioButtonBothDifferent.AutoSize = true;
             this.radioButtonBothDifferent.Location = new System.Drawing.Point(11, 141);
-            this.radioButtonBothDifferent.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonBothDifferent.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonBothDifferent.Name = "radioButtonBothDifferent";
             this.radioButtonBothDifferent.Size = new System.Drawing.Size(135, 17);
             this.radioButtonBothDifferent.TabIndex = 5;
@@ -173,7 +173,7 @@
             // 
             this.radioButtonBothIdentical.AutoSize = true;
             this.radioButtonBothIdentical.Location = new System.Drawing.Point(11, 118);
-            this.radioButtonBothIdentical.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonBothIdentical.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonBothIdentical.Name = "radioButtonBothIdentical";
             this.radioButtonBothIdentical.Size = new System.Drawing.Size(136, 17);
             this.radioButtonBothIdentical.TabIndex = 4;
@@ -186,7 +186,7 @@
             // 
             this.radioButtonOnlyTheirs.AutoSize = true;
             this.radioButtonOnlyTheirs.Location = new System.Drawing.Point(11, 93);
-            this.radioButtonOnlyTheirs.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonOnlyTheirs.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonOnlyTheirs.Name = "radioButtonOnlyTheirs";
             this.radioButtonOnlyTheirs.Size = new System.Drawing.Size(117, 17);
             this.radioButtonOnlyTheirs.TabIndex = 3;
@@ -199,7 +199,7 @@
             // 
             this.radioButtonOnlyYours.AutoSize = true;
             this.radioButtonOnlyYours.Location = new System.Drawing.Point(11, 70);
-            this.radioButtonOnlyYours.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonOnlyYours.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonOnlyYours.Name = "radioButtonOnlyYours";
             this.radioButtonOnlyYours.Size = new System.Drawing.Size(117, 17);
             this.radioButtonOnlyYours.TabIndex = 2;
@@ -212,7 +212,7 @@
             // 
             this.radioButtonTheirs.AutoSize = true;
             this.radioButtonTheirs.Location = new System.Drawing.Point(11, 46);
-            this.radioButtonTheirs.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonTheirs.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonTheirs.Name = "radioButtonTheirs";
             this.radioButtonTheirs.Size = new System.Drawing.Size(103, 17);
             this.radioButtonTheirs.TabIndex = 1;
@@ -225,7 +225,7 @@
             this.radioButtonYours.AutoSize = true;
             this.radioButtonYours.Checked = true;
             this.radioButtonYours.Location = new System.Drawing.Point(11, 21);
-            this.radioButtonYours.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonYours.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonYours.Name = "radioButtonYours";
             this.radioButtonYours.Size = new System.Drawing.Size(101, 17);
             this.radioButtonYours.TabIndex = 0;
@@ -236,6 +236,7 @@
             // 
             // buttonReset
             // 
+            this.buttonReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonReset.Location = new System.Drawing.Point(585, 350);
             this.buttonReset.Name = "buttonReset";
             this.buttonReset.Size = new System.Drawing.Size(250, 23);
@@ -258,7 +259,7 @@
             this.Controls.Add(this.trackBarConfidence);
             this.Controls.Add(this.pictureBoxTile);
             this.Controls.Add(this.label1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.MinimumSize = new System.Drawing.Size(850, 600);
             this.Name = "ReviewRocksUI";
             this.Size = new System.Drawing.Size(850, 600);

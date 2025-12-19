@@ -336,6 +336,7 @@
             // 
             // buttonReset
             // 
+            this.buttonReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.buttonReset.Location = new System.Drawing.Point(569, 425);
             this.buttonReset.Name = "buttonReset";
             this.buttonReset.Size = new System.Drawing.Size(270, 23);
@@ -374,7 +375,7 @@
             this.Controls.Add(this.trackBarMinArea);
             this.Controls.Add(this.pictureBoxTile);
             this.Controls.Add(this.label1);
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.MinimumSize = new System.Drawing.Size(850, 600);
             this.Name = "RefineShadowsUI";
             this.Size = new System.Drawing.Size(850, 600);
