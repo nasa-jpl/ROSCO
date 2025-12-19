@@ -143,14 +143,16 @@ namespace RockCollect.Stages
         {
             if (Stage.GetActiveTileAddress(out int x, out int y))
             {
-                int idx = Stage.GetClosestTunedTile(Stage.GetTileIndex(x, y), (i) => Stage.ValidTileJSON(i));
-                if (idx >= 0)
+                int closest = Stage.GetClosestTunedTile(Stage.GetTileIndex(x, y), (i) => Stage.ValidTileJSON(i));
+                if (closest >= 0)
                 {
-                    Stage.CopySettings(idx, Stage.GetActiveTile(), confirm: true);
+                    Stage.CopySettings(closest, Stage.GetActiveTile(), confirm: true);
                 }
                 else
                 {
-                    MessageBox.Show(string.Format("No closest tuned tile found to tile ({0}, {1}).", x, y),
+                    string grp = Stage.GetActiveTileGroup();
+                    MessageBox.Show(string.Format("No closest tuned tile found to tile ({0}, {1}){2}.", x, y,
+                                                  !string.IsNullOrEmpty(grp) ? " in shape file group " + grp : ""),
                                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
