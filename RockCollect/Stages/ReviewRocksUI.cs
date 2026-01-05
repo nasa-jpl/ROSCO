@@ -7,11 +7,14 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using RockCollect;
 
 namespace RockCollect.Stages
 {
     public partial class ReviewRocksUI : UserControl
     {
+        bool resetting = false;
+
         public ReviewRocks Stage;
 
         public ReviewRocksUI(ReviewRocks stage)
@@ -19,57 +22,25 @@ namespace RockCollect.Stages
             InitializeComponent();
             Stage = stage;
             stage.OnTeardownUI = () => {
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxTile.Image.Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
             };
         }
 
-        private void InitializeTrackBarValues()
+        private void InitializeTrackBarValues(bool fromReset = false)
         {
-            RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE, trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
-        }
-
-        float RemapValues(float fromValue, float fromMin, float fromMax, float toMin, float toMax)
-        {
-            float pct = (fromValue - fromMin) / (fromMax - fromMin);
-            return (pct * (toMax - toMin) + toMin);
-        }
-
-        private void RefreshTrackbar(float stageVal, float stageMin, float stageMax, float stageDisable, TrackBar trackBar, Label valLabel, CheckBox check)
-        {
-            if (stageVal == stageDisable)
+            resetting = true;
+            Util.RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE,
+                                 RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE,
+                                 trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
+            if (!fromReset)
             {
-                valLabel.Text = "Disabled";
-
-                if (trackBar.Enabled == true)
-                {
-                    trackBar.Enabled = false;
-                    valLabel.Enabled = false;
-                }
-
-                if (check != null && check.Checked == true)
-                {
-                    check.Checked = false;
-                }
-            }
-            else
-            {
-                if (trackBar.Enabled == false)
-                {
-                    trackBar.Enabled = true;
-                    valLabel.Enabled = true;
-                }
-                trackBar.Value = (int)RemapValues(stageVal, stageMin, stageMax, trackBar.Minimum, trackBar.Maximum);
-                valLabel.Text = stageVal.ToString("F2");
-
-                if (check != null && check.Checked == false)
-                {
-                    check.Checked = true;
-                }
+                resetting = false;
             }
         }
 
@@ -106,40 +77,39 @@ namespace RockCollect.Stages
         internal void SetSelectedRockUI(int label, RockDetector.DetectionResults results)
         {
             Bitmap detectionsImage = GetDetectionsImage();
-            
-                if (label >= 0)
+
+            if (label >= 0)
+            {
+                using (Graphics grf = Graphics.FromImage(detectionsImage))
                 {
-                    using (Graphics grf = Graphics.FromImage(detectionsImage))
+                    //ellipse
+                    using (Pen brush = new Pen(Color.Blue))
                     {
-                        //ellipse
-                        using (Pen brush = new Pen(Color.Blue))
-                        {
-                            var rock = results.outRocks.Where(x => x.id == label).First();
-
-                            float upperLeftX = rock.rockX - rock.rockWidth / 2.0f;
-                            float upperLeftY = rock.rockY - rock.rockWidth / 2.0f;
-                            grf.DrawEllipse(brush, upperLeftX, upperLeftY, rock.rockWidth, rock.rockWidth);
-
-                        }
+                        var rock = results.outRocks.Where(x => x.id == label).First();
+                        float upperLeftX = rock.rockX - rock.rockWidth / 2.0f;
+                        float upperLeftY = rock.rockY - rock.rockWidth / 2.0f;
+                        grf.DrawEllipse(brush, upperLeftX, upperLeftY, rock.rockWidth, rock.rockWidth);
                     }
                 }
+            }
 
-            if (this.pictureBoxTile.Image != null)
+            System.Drawing.Image old = this.pictureBoxTile.Image;
+            if (old != null)
             {
-                ((IDisposable)this.pictureBoxTile.Image).Dispose();
                 this.pictureBoxTile.Image = null;
+                old.Dispose();
             }
 
             this.pictureBoxTile.Image = detectionsImage;
-           
         }
 
         private void RefreshUI(RockDetector.DetectionResults results, RockDetector.DetectionResults passiveResults)
         {
-            if (this.pictureBoxTile.Image != null)
+            System.Drawing.Image old = this.pictureBoxTile.Image;
+            if (old != null)
             {
-                ((IDisposable)this.pictureBoxTile.Image).Dispose();
                 this.pictureBoxTile.Image = null;
+                old.Dispose();
             }
 
             Bitmap detectionsImage = GetDetectionsImage();            
@@ -182,8 +152,10 @@ namespace RockCollect.Stages
 
         private void trackBarConfidence_ValueChanged(object sender, EventArgs e)
         {
-            float confidence = RemapValues(trackBarConfidence.Value, trackBarConfidence.Minimum, trackBarConfidence.Maximum,
-                                           RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE);
+            if (resetting) return;
+            float confidence =
+                Util.RemapValues(trackBarConfidence.Value, trackBarConfidence.Minimum, trackBarConfidence.Maximum,
+                                 RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE);
 
             Stage.SetConfidence(confidence, out RockDetector.DetectionResults results);
 
@@ -193,6 +165,7 @@ namespace RockCollect.Stages
 
         private void checkBoxConfidence_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             RockDetector.DetectionResults results = null;
             if (checkBoxConfidence.Checked)
             {
@@ -203,12 +176,15 @@ namespace RockCollect.Stages
                 Stage.SetConfidence(RockDetector.DISABLE_CONFIDENCE, out results);
             }
 
-            RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE, RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE, trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
+            Util.RefreshTrackbar(Stage.GetConfidence(), RockDetector.MIN_VALID_CONFIDENCE,
+                                 RockDetector.MAX_VALID_CONFIDENCE, RockDetector.DISABLE_CONFIDENCE,
+                                 trackBarConfidence, labelConfidenceVal, checkBoxConfidence);
             RefreshUI(results, Stage.GetComparisonDetections());
         }
 
         private void radioButtonYours_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonYours.Checked)
             {
                 Stage.SetConfidence(Stage.GetConfidence(), out RockDetector.DetectionResults results);
@@ -220,6 +196,7 @@ namespace RockCollect.Stages
 
         private void radioButtonTheirs_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonTheirs.Checked)
             {
                 RockDetector.DetectionResults theirs = Stage.GetComparisonDetections();
@@ -233,6 +210,7 @@ namespace RockCollect.Stages
 
         private void radioButtonOnlyYours_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonOnlyYours.Checked)
             {
                 this.trackBarConfidence.Enabled = false;
@@ -243,6 +221,7 @@ namespace RockCollect.Stages
 
         private void radioButtonOnlyTheirs_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonOnlyTheirs.Checked)
             {
                 this.trackBarConfidence.Enabled = false;
@@ -255,6 +234,7 @@ namespace RockCollect.Stages
 
         private void radioButtonBothIdentical_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonBothIdentical.Checked)
             {
                 this.trackBarConfidence.Enabled = false;
@@ -265,12 +245,22 @@ namespace RockCollect.Stages
 
         private void radioButtonBothDifferent_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonBothDifferent.Checked)
             {
                 this.trackBarConfidence.Enabled = false;
                 this.checkBoxConfidence.Enabled = false;
                 RefreshUI(Stage.GetYourMatchedDifferentRocks(),Stage.GetComparisonDetections());
             }
+        }
+
+        private void buttonReset_Click(object sender, EventArgs e)
+        {
+            resetting = true;
+            Stage.ResetToDefaults(out RockDetector.DetectionResults results);
+            InitializeTrackBarValues(fromReset: true);
+            RefreshUI(results, Stage.GetComparisonDetections());
+            resetting = false;
         }
     }
 }

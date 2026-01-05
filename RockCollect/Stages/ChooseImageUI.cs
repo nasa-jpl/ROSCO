@@ -22,6 +22,8 @@ namespace RockCollect.Stages
             Stage.SetGroundSamplingDistance((float)numericGSD.Value);
             Stage.SetSolarIncidence((float)numericIncidence.Value);
             Stage.SetSubSolarAzimuth((float)numericAzimuth.Value);
+            labelStatusStorageFolder.Text =
+                "Storge Folder: " + stage.GetFinalOutputDirectory(null);
         }
 
         private void buttonNewSession_Click(object sender, EventArgs e)
@@ -36,7 +38,23 @@ namespace RockCollect.Stages
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     Stage.SetNewImage(openFileDialog.FileName);
-                    this.labelStatusImage.Text = "Image Selected: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                    this.labelStatusImage.Text =
+                        "Image Selected: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                }
+            }
+        }
+
+        private void buttonStorageFolder_Click(object sender, EventArgs e)
+        {
+            using (var dialog = new FolderBrowserDialog())
+            {
+                dialog.SelectedPath = Directory.GetCurrentDirectory();
+
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    Stage.ParentWorkflow.SetFinalOutputDirectory(dialog.SelectedPath);
+                    labelStatusStorageFolder.Text =
+                        "Storge Folder: " + Stage.GetFinalOutputDirectory(null);
                 }
             }
         }
@@ -71,14 +89,16 @@ namespace RockCollect.Stages
                     {
                         Rocklist rocklist = new Rocklist(openFileDialog.FileName);
                         Stage.SetComparisonRocklist(openFileDialog.FileName);
-                        this.labelStatusRocklist.Text = "Rocklist Selected: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                        this.labelStatusRocklist.Text =
+                            "Rocklist Selected: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
                         numericGSD.Value = (decimal)rocklist.paramList.GSD_resolution;
                         numericIncidence.Value = (decimal)rocklist.paramList.sun_incidence_angle;
                         numericAzimuth.Value = (decimal)rocklist.paramList.sun_azimuth_angle;
                     }
                     catch
                     {
-                        this.labelStatusRocklist.Text = "Failed to parse rocklist: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                        this.labelStatusRocklist.Text =
+                            "Failed to parse rocklist: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
                     }
                 }
             }
@@ -96,7 +116,8 @@ namespace RockCollect.Stages
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
                     Stage.SetShapeFile(openFileDialog.FileName);
-                    this.labelShapeFile.Text = "Shape File Selected: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                    this.labelShapeFile.Text =
+                        "Shape File Selected: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
                 }
             }
         }

@@ -16,6 +16,24 @@ namespace RockCollect
         static public readonly float SHADOW_SPLIT_RATIO = 0.5f;
         public const int TILESIZE = 550;
 
+        static public readonly float MIN_VALID_GSD = 0;
+        static public readonly float MAX_VALID_GSD = 100;
+
+        static public readonly float MIN_VALID_AZIMUTH = 0;
+        static public readonly float MAX_VALID_AZIMUTH = 360;
+
+        static public readonly float MIN_VALID_INCIDENCE = 0;
+        static public readonly float MAX_VALID_INCIDENCE = 360;
+
+        static public readonly float MIN_VALID_GAMMA = 0.00001f;
+        static public readonly float MAX_VALID_GAMMA = 5.0f;
+        static public readonly float DEFAULT_GAMMA = 3.0f;
+
+        static public readonly int MIN_VALID_GAMMA_THRESHOLD_OVERRIDE = 1;
+        static public readonly int MAX_VALID_GAMMA_THRESHOLD_OVERRIDE = 255;
+        static public readonly int DISABLE_GAMMA_THRESHOLD_OVERRIDE = 0;
+        static public readonly int DEFAULT_GAMMA_THRESHOLD_OVERRIDE = DISABLE_GAMMA_THRESHOLD_OVERRIDE;
+
         static public readonly float MIN_VALID_MIN_SHADOW_AREA = 3;
         static public readonly float MAX_VALID_MIN_SHADOW_AREA = TILESIZE * 0.25f;
         static public readonly float DISABLE_MIN_SHADOW_AREA = 2;
@@ -23,7 +41,7 @@ namespace RockCollect
 
         static public readonly float MIN_VALID_MAX_SHADOW_AREA = 2;
         static public readonly float MAX_VALID_MAX_SHADOW_AREA = TILESIZE * 4;
-        static public readonly float DISABLE_MAX_SHADOW_AREA = (TILESIZE * 0.5f) * (TILESIZE * 0.5f);
+        static public readonly float DISABLE_MAX_SHADOW_AREA = (0.5f * TILESIZE) * (0.5f * TILESIZE);
         static public readonly float DEFAULT_MAX_SHADOW_AREA = DISABLE_MAX_SHADOW_AREA;
 
         static public readonly float MIN_VALID_ASPECT = 1;
@@ -46,7 +64,6 @@ namespace RockCollect
         static public readonly float DISABLE_CONFIDENCE = 0;
         static public readonly float DEFAULT_CONFIDENCE = DISABLE_CONFIDENCE;
 
-        static public readonly int DISABLE_GAMMA_THRESH_OVERRIDE = 0;
 
         [DllImport("RockDetectorShared.dll", CallingConvention = CallingConvention.Cdecl)]
         static public extern int threshold_from_files([MarshalAs(UnmanagedType.LPStr)] string inputImagePath,
@@ -154,7 +171,6 @@ namespace RockCollect
             public float GSD;
             public float Azimuth;
             public float Incidence;
-
             public float MinShadowArea; //pixels^2
             public float MaxShadowArea; //pixels^2
             public float ShadowAspect;  //maximum ratio of shadow ellipse major axis to minor axis
@@ -169,6 +185,84 @@ namespace RockCollect
             public Settings(Dictionary<string, string> strings)
             {
                 Populate(strings);
+            }
+
+            public static string CheckFloat(Dictionary<string, string> strings, string key, float min, float max,
+                                            float disable)
+            {
+                if (!strings.ContainsKey(key)) return $"{key} not present";
+                
+                float v;
+                try { v = float.Parse(strings[key]); }
+                catch (FormatException) { return $"value \"{strings[key]}\" for {key} not a valid float"; }
+
+                if (v == disable) return null;
+
+                if (v < min) return $"value {v} for {key} less than {min}";
+                if (v > max) return $"value {v} for {key} greater than {max}";
+                
+                return null;
+            }
+                
+            public static string CheckInt(Dictionary<string, string> strings, string key, int min, int max, int disable)
+            {
+                if (!strings.ContainsKey(key)) return $"{key} not present";
+                
+                int v;
+                try { v = int.Parse(strings[key]); }
+                catch (FormatException) { return $"value \"{strings[key]}\" for {key} not a valid int"; }
+
+                if (v == disable) return null;
+
+                if (v < min) return $"value {v} for {key} less than {min}";
+                if (v > max) return $"value {v} for {key} greater than {max}";
+
+                return null;
+            }
+
+            public static string CheckSettings(Dictionary<string, string> strings)
+            {
+                string ret = null;
+
+                ret = CheckFloat(strings, "GAMMA", MIN_VALID_GAMMA, MAX_VALID_GAMMA, MAX_VALID_GAMMA);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "GSD", MIN_VALID_GSD, MAX_VALID_GSD, MAX_VALID_GSD);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "AZIMUTH", MIN_VALID_AZIMUTH, MAX_VALID_AZIMUTH, MAX_VALID_AZIMUTH);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "INCIDENCE", MIN_VALID_INCIDENCE, MAX_VALID_INCIDENCE, MAX_VALID_INCIDENCE);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "MINSHADOWAREA", MIN_VALID_MIN_SHADOW_AREA, MAX_VALID_MIN_SHADOW_AREA,
+                                 DISABLE_MIN_SHADOW_AREA);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "MAXSHADOWAREA", MIN_VALID_MAX_SHADOW_AREA, MAX_VALID_MAX_SHADOW_AREA,
+                                 DISABLE_MAX_SHADOW_AREA);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "SHADOWASPECT", MIN_VALID_ASPECT, MAX_VALID_ASPECT, DISABLE_ASPECT);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "MEANGRADIENT", MIN_VALID_MEAN_GRADIENT, MAX_VALID_MEAN_GRADIENT,
+                                 DISABLE_GRADIENT);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "MINSHADOWSPLIT", MIN_VALID_SPLIT, MAX_VALID_SPLIT, DISABLE_SPLIT);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckFloat(strings, "CONFIDENCE", MIN_VALID_CONFIDENCE, MAX_VALID_CONFIDENCE, DISABLE_CONFIDENCE);
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                ret = CheckInt(strings, "GAMMA_THRESHOLD_OVERRIDE", MIN_VALID_GAMMA_THRESHOLD_OVERRIDE,
+                               MAX_VALID_GAMMA_THRESHOLD_OVERRIDE, DISABLE_GAMMA_THRESHOLD_OVERRIDE);
+
+                if (!string.IsNullOrEmpty(ret)) return ret;
+
+                return null;
             }
 
             public void Populate(Dictionary<string, string> strings)

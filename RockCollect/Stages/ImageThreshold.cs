@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -28,10 +29,6 @@ namespace RockCollect.Stages
         int thresholdInGamma;
 
         static public readonly float DATA_VERSION = 0.1f;
-        static public readonly float DEFAULT_GAMMA = 3.0f;
-        static public readonly int DEFAULT_THRESHOLDOVERRIDE = 0; //DISABLED
-        static public readonly float MAX_GAMMA = 5.0f;
-        static public readonly float MIN_GAMMA = 0.00001f;
 
         public override float GetDataVersion() { return DATA_VERSION; }
 
@@ -50,132 +47,148 @@ namespace RockCollect.Stages
             return new ImageThresholdStatusUI(mainUI);
         }
 
-        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory)
+        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory, Workflow workflow)
         {
-            base.Init(log, stageDirectory, finalOutputDirectory);
+            base.Init(log, stageDirectory, finalOutputDirectory, workflow);
 
-            Gamma = DEFAULT_GAMMA;
-            ThresholdOverride = DEFAULT_THRESHOLDOVERRIDE;
+            Gamma = RockDetector.DEFAULT_GAMMA;
+            ThresholdOverride = RockDetector.DEFAULT_GAMMA_THRESHOLD_OVERRIDE;
+        }
+
+        public void ResetToDefaults()
+        {
+            Gamma = RockDetector.DEFAULT_GAMMA;
+            ThresholdOverride = RockDetector.DEFAULT_GAMMA_THRESHOLD_OVERRIDE;
+            UpdateShadowAndOverlay();
         }
 
         public override bool LoadInput(string directory)
         {
-            bool result = base.LoadInput(directory);
-            if (result == false)
-                return false;
+            if (!base.LoadInput(directory)) return false;
 
-            if (!this.inData.Data.ContainsKey("TILE_PATH"))
-                return false;
+            if (!this.inData.Data.ContainsKey("TILE_PATH")) return false;
 
             TilePath = inData.Data["TILE_PATH"];
-            if (!File.Exists(TilePath))
-                throw new Exception(string.Format("Input tile image {0} doesn't exist", TilePath));
+            if (!File.Exists(TilePath)) throw new Exception(string.Format("Input tile image {0} not found", TilePath));
 
-            GDALSerializer.LoadMetadata(TilePath, out int widthPixels, out int heightPixels, out int bands, out Type[] dataTypes);
+            GDALSerializer.LoadMetadata(TilePath, out int widthPixels, out int heightPixels, out int bands,
+                                        out Type[] dataTypes);
             TileImage = GDALSerializer.Load(TilePath, 0, 0, widthPixels, heightPixels);
 
-            if (TileImage == null)
-                return false;
+            if (TileImage == null) return false;
 
             ShadowPath = Path.Combine(GetDirectory(Dir.Output), "shadow.pgm");
             GammaPath = Path.Combine(GetDirectory(Dir.Output), "gamma.pgm");
 
+            string tileJson = GetTileJSON();
+            if (File.Exists(tileJson))
+            {
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
+                GetFloatSetting(existing, "GAMMA", RockDetector.MIN_VALID_GAMMA, RockDetector.MAX_VALID_GAMMA,
+                                v => { Gamma = v; });
+                GetIntSetting(existing, "GAMMA_THRESHOLD_OVERRIDE", RockDetector.MIN_VALID_GAMMA_THRESHOLD_OVERRIDE,
+                              RockDetector.MAX_VALID_GAMMA_THRESHOLD_OVERRIDE, v => { ThresholdOverride = v; });
+            }
+                
             UpdateShadowAndOverlay();
+
             return true;
+        }
+
+        private string GetTileJSON()
+        {
+            return GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
         }
 
         public override bool SaveOutput()
         {
-            if (base.SaveOutput())
+            if (!base.SaveOutput()) return false;
+
+            if (TileImage == null) return false;
+            
+            if (string.IsNullOrEmpty(TilePath)) return false;
+            
+            //TODO:need a data passthru, copies image input to output and updates paths
+            string tilePath = Path.Combine(GetDirectory(Dir.Output), "tile.pgm");
+            GDALSerializer.Save(TileImage, tilePath, null);
+            
+            this.outData.Data.Add("TILE_PATH", tilePath);
+            
+            InputToOutput("GSD");
+            InputToOutput("AZIMUTH");
+            InputToOutput("INCIDENCE");
+            InputToOutput("IMAGE_PATH");
+            InputToOutput("TILE_INDEX");
+            InputToOutput("TILE_COL");
+            InputToOutput("TILE_ROW");
+            InputToOutput("TILE_GROUP");
+            InputToOutput("TILES_HORIZONTAL");
+            InputToOutput("TILES_VERTICAL");
+            InputToOutput("COMPARISON_ROCKLIST");
+            
+            if (ShadowImage == null) return false;
+            
+            if (string.IsNullOrEmpty(ShadowPath)) return false;
+            
+            string shadowPath = Path.Combine(GetDirectory(Dir.Output), "shadow.pgm");
+            GDALSerializer.Save(ShadowImage, shadowPath, null);
+            this.outData.Data.Add("SHADOW_PATH", ShadowPath);
+            
+            if (GammaImage == null) return false;
+            
+            if (string.IsNullOrEmpty(GammaPath)) return false;
+            
+            string gammaPath = Path.Combine(GetDirectory(Dir.Output), "gamma.pgm");
+            GDALSerializer.Save(GammaImage, gammaPath, null);
+            this.outData.Data.Add("GAMMA_PATH", GammaPath);
+            
+            // shadow blob
+            string shadowBlobPath = Path.Combine(GetDirectory(Dir.Output), "shadowBlobs.ppm");
+            int numShadows = 0;
+            
+            Console.WriteLine("running rock detector on tile to make shadow blob image");
+            
+            if(0 == RockDetector.shadows_from_files(shadowPath, shadowBlobPath, ref numShadows)) //BUGBUG: pre-splitting ids...wont match
             {
-                // tile image
-                if (TileImage == null)
-                    return false;
-
-                if (string.IsNullOrEmpty(TilePath))
-                    return false;
-
-                string tilePath = Path.Combine(GetDirectory(Dir.Output), "tile.pgm"); //TODO:need a data passthru, copies image input to output and updates paths
-                GDALSerializer.Save(TileImage, tilePath, null);
-
-                this.outData.Data.Add("TILE_PATH", tilePath);
-
-                InputToOutput("GSD");
-                InputToOutput("AZIMUTH");
-                InputToOutput("INCIDENCE");
-                InputToOutput("IMAGE_PATH");
-                InputToOutput("TILE_INDEX");
-                InputToOutput("TILE_COL");
-                InputToOutput("TILE_ROW");
-                InputToOutput("TILE_GROUP");
-                InputToOutput("TILES_HORIZONTAL");
-                InputToOutput("TILES_VERTICAL");
-                InputToOutput("COMPARISON_ROCKLIST");
-                
-                // shadow image
-                if (ShadowImage == null)
-                    return false;
-
-                if (string.IsNullOrEmpty(ShadowPath))
-                    return false;
-
-                string shadowPath = Path.Combine(GetDirectory(Dir.Output), "shadow.pgm");
-                GDALSerializer.Save(ShadowImage, shadowPath, null);
-                this.outData.Data.Add("SHADOW_PATH", ShadowPath);
-
-                // gamma image
-                if (GammaImage == null)
-                    return false;
-
-                if (string.IsNullOrEmpty(GammaPath))
-                    return false;
-
-                string gammaPath = Path.Combine(GetDirectory(Dir.Output), "gamma.pgm");
-                GDALSerializer.Save(GammaImage, gammaPath, null);
-                this.outData.Data.Add("GAMMA_PATH", GammaPath);
-
-                // shadow blob
-                string shadowBlobPath = Path.Combine(GetDirectory(Dir.Output), "shadowBlobs.ppm");
-                int numShadows = 0;
-
-                Console.WriteLine("running rock detector on tile to make shadow blob image");
-
-                if(0 == RockDetector.shadows_from_files(shadowPath, shadowBlobPath, ref numShadows)) //BUGBUG: pre-splitting ids...wont match
-                {
-                    throw new Exception("Failed to generate shadow blob image");
-                }
-
-                if (!File.Exists(shadowBlobPath))
-                    throw new Exception("Failed to find shadow blob image");
-
-                this.outData.Data.Add("SHADOW_BLOB_PATH", shadowBlobPath);
-
-                // gamma
-                this.outData.Data.Add("GAMMA", Gamma.ToString());
-                this.outData.Data.Add("GAMMA_THRESHOLD_OVERRIDE", ThresholdOverride.ToString());
-
-                if (!WriteOutputJSON())
-                    return false;
-
-                return true;
+                throw new Exception("Failed to generate shadow blob image");
             }
+            
+            if (!File.Exists(shadowBlobPath))
+                throw new Exception("Failed to find shadow blob image");
+            
+            this.outData.Data.Add("SHADOW_BLOB_PATH", shadowBlobPath);
+            
+            // gamma
+            this.outData.Data.Add("GAMMA", Gamma.ToString());
+            this.outData.Data.Add("GAMMA_THRESHOLD_OVERRIDE", ThresholdOverride.ToString());
+            
+            if (!WriteOutputJSON()) return false;
+            
+            string tileJson = GetTileJSON();
+            StageData tileData =
+                File.Exists(tileJson) ? JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson))
+                : new StageData();
 
-            return false;
+            tileData.Data["GAMMA"] = Gamma.ToString();
+            tileData.Data["GAMMA_THRESHOLD_OVERRIDE"] = ThresholdOverride.ToString();
+
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            File.WriteAllText(tileJson, JsonSerializer.Serialize(tileData, tileData.GetType(), options));
+            
+            return true;
         }
-
 
         public Dictionary<float, int> SweepShadowBlobsForGamma(float stepSize, string shadowPath)
         {
             Dictionary<float, int> countByGamma = new Dictionary<float, int>();
-            if (string.IsNullOrEmpty(TilePath))
-                return countByGamma;
 
+            if (string.IsNullOrEmpty(TilePath)) return countByGamma;
 
             float GSD = float.Parse(inData.Data["GSD"]);
             float Azimuth = float.Parse(inData.Data["AZIMUTH"]);
             float Incidence = float.Parse(inData.Data["INCIDENCE"]);
 
-            float range = MAX_GAMMA - MIN_GAMMA;
+            float range = RockDetector.MAX_VALID_GAMMA - RockDetector.MIN_VALID_GAMMA;
             int steps = (int)Math.Ceiling(range / stepSize);
 
             RockDetector.INSETTINGS settings = new RockDetector.INSETTINGS {
@@ -190,16 +203,16 @@ namespace RockCollect.Stages
                 ShadowAspect = RockDetector.DISABLE_ASPECT,
                 MeanGradient = RockDetector.DISABLE_GRADIENT,
                 MaxShadowArea = RockDetector.DISABLE_MAX_SHADOW_AREA,
-                GammaThresholdOverride = RockDetector.DISABLE_GAMMA_THRESH_OVERRIDE
+                GammaThresholdOverride = RockDetector.DISABLE_GAMMA_THRESHOLD_OVERRIDE
             };
 
             Console.WriteLine(string.Format("running rock detector on tile {0} times with gamma {1} to {2} " +
                                             "to compute shadow blob pixels by gamma",
-                                            steps, MIN_GAMMA, MAX_GAMMA));
+                                            steps, RockDetector.MIN_VALID_GAMMA, RockDetector.MAX_VALID_GAMMA));
 
             for (int idxStep = 0; idxStep < steps; idxStep++)
             {
-                settings.Gamma = MIN_GAMMA + idxStep * stepSize;
+                settings.Gamma = RockDetector.MIN_VALID_GAMMA + idxStep * stepSize;
                 var results = new RockDetector.DetectionResults("SweepGamma", TileImage.Width, TileImage.Height);
 
                 int numOutRocks = 0;
@@ -225,19 +238,19 @@ namespace RockCollect.Stages
         public Dictionary<float, int> SweepShadowPixelsForGamma(float stepSize, string shadowPath)
         {
             Dictionary<float, int> countByGamma = new Dictionary<float, int>();
-            if (string.IsNullOrEmpty(TilePath))
-                return countByGamma;
 
-            float range = MAX_GAMMA - MIN_GAMMA;
+            if (string.IsNullOrEmpty(TilePath)) return countByGamma;
+
+            float range = RockDetector.MAX_VALID_GAMMA - RockDetector.MIN_VALID_GAMMA;
             int steps = (int)Math.Ceiling(range / stepSize);
 
             Console.WriteLine(string.Format("running rock detector on tile {0} times with gamma {1} to {2} " +
                                             "to compute shadow pixels by gamma",
-                                            steps, MIN_GAMMA, MAX_GAMMA));
+                                            steps, RockDetector.MIN_VALID_GAMMA, RockDetector.MAX_VALID_GAMMA));
 
             for (int idxStep = 1; idxStep < steps; idxStep++) //gamma 0 is too many pixels
             {
-                float gamma = MIN_GAMMA + idxStep * stepSize;
+                float gamma = RockDetector.MIN_VALID_GAMMA + idxStep * stepSize;
                 var tmpImage = CreateShadowImage(TilePath, shadowPath, gamma, 0, out int thresholdInGamma, true);
                 int shadowPixels = 0;
                 for (int idxPixel = 0; idxPixel < tmpImage.Width * tmpImage.Height; idxPixel++)

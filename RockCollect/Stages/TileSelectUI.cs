@@ -8,6 +8,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using RockCollect;
 
 namespace RockCollect.Stages
 {
@@ -20,13 +21,15 @@ namespace RockCollect.Stages
             InitializeComponent();
             Stage = stage;
             stage.OnTeardownUI = () => {
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxTile.Image.Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
             };
+            textBox.Text = "Storage folder: " + stage.GetFinalOutputDirectory();
         }
 
         private void RefreshInitialUI()
@@ -38,29 +41,34 @@ namespace RockCollect.Stages
 
             int horizTiles = Stage.GetNumTilesHorizontal();
             int vertTiles = Stage.GetNumTilesVertical();
-            this.labelTotalTilesVal.Text = string.Format("{0} ({1} x {2})", horizTiles * vertTiles, horizTiles, vertTiles);
+            this.labelTotalTilesVal.Text = string.Format("{0} ({1} x {2})",
+                                                         horizTiles * vertTiles, horizTiles, vertTiles);
 
             this.labelRemainingVal.Text = Stage.GetRemainingTilesToTune().ToString();
 
-            this.labelTilesToVisitVal.Text = Stage.GetTilesToVisit().ToString();
+            this.labelSkippedTiles.Text = Stage.GetSkippedTiles().ToString();
+
+            this.labelTunedTiles.Text = Stage.CountTunedTiles().ToString();
 
             this.labelGroupVal.Text = "";
 
             this.labelRunnableTiles.Text = Stage.CountRunnableTiles().ToString();
-            this.labelTunedTiles.Text = Stage.CountTunedTiles().ToString();
+
+            EnableCopySettings(Stage.GetActiveTile() >= 0);
         }
 
-        private void RefreshSelectedUI()
+        public void RefreshSelectedUI()
         {
             bool selectedTile = Stage.GetActiveTileAddress(out int tileCol, out int tileRow);
             if (selectedTile)
             {
                 this.labelSelectedTileVal.Text = string.Format("{0}, {1}", tileCol, tileRow);
 
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
-                    ((IDisposable)this.pictureBoxTile.Image).Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
 
                 Bitmap activeTileBmp = Stage.GetActiveTileBitmap();                                
@@ -69,16 +77,19 @@ namespace RockCollect.Stages
                 Stage.GetActiveTileResolution(out int widthPixels, out int heightPixels);
                 this.labelSelectedTilePixelsVal.Text = string.Format("{0} x {1}", widthPixels, heightPixels);
 
+                this.labelSkippedTiles.Text = Stage.GetSkippedTiles().ToString();
+
                 this.labelGroupVal.Text = Stage.GetActiveTileGroup();
             }
             else
             {
                 this.labelSelectedTileVal.Text = "";
 
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
-                    ((IDisposable)this.pictureBoxTile.Image).Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
 
                 this.labelSelectedTilePixelsVal.Text = "";
@@ -93,10 +104,72 @@ namespace RockCollect.Stages
             RefreshSelectedUI();
         }
 
-        private void buttonChooseTile_Click(object sender, EventArgs e)
+        private void buttonManualChooseTile_Click(object sender, EventArgs e)
         {
-            Stage.ChooseTile();
+            using (ChooseTile dialog = new ChooseTile(Stage))
+            {
+                if (dialog.ShowDialog() == DialogResult.OK)
+                {
+                    Stage.ChooseTile(dialog.GetTileCol(), dialog.GetTileRow());
+                    RefreshSelectedUI();
+                }
+            }
+        }
+
+        private void buttonAutoChooseTile_Click(object sender, EventArgs e)
+        {
+            Stage.AutoChooseTile();
             RefreshSelectedUI();
+        }
+
+        public void EnableCopySettings(bool enable)
+        {
+            buttonCopySettingsManual.Enabled = enable;
+            buttonCopySettingsClosest.Enabled = enable;
+            buttonCopySettingsMostRecent.Enabled = enable;
+        }
+
+        private void buttonCopySettingsManual_Click(object sender, EventArgs e)
+        {
+            int active = Stage.GetActiveTile();
+            if (active < 0) return;
+            ChooseTile
+                .ChooseExistingTile(Stage.GetFinalOutputDirectory(),
+                                    Stage.GetTilesHorizontal(), Stage.GetTilesVertical(),
+                                    (x, y) => { Stage.CopySettings(Stage.GetTileIndex(x, y), active, confirm: true); });
+        }
+
+        private void buttonCopySettingsFromClosest_Click(object sender, EventArgs e)
+        {
+            if (Stage.GetActiveTileAddress(out int x, out int y))
+            {
+                int closest = Stage.GetClosestTunedTile(Stage.GetTileIndex(x, y), (i) => Stage.ValidTileJSON(i));
+                if (closest >= 0)
+                {
+                    Stage.CopySettings(closest, Stage.GetActiveTile(), confirm: true);
+                }
+                else
+                {
+                    string grp = Stage.GetActiveTileGroup();
+                    MessageBox.Show(string.Format("No closest tuned tile found to tile ({0}, {1}){2}.", x, y,
+                                                  !string.IsNullOrEmpty(grp) ? " in shape file group " + grp : ""),
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void buttonCopySettingsFromMostRecent_Click(object sender, EventArgs e)
+        {
+            int idx = Stage.GetMostRecentlyTunedTile();
+            if (idx >= 0)
+            {
+                Stage.CopySettings(idx, Stage.GetActiveTile(), confirm: true);
+            }
+            else
+            {
+                MessageBox.Show("No most recently tuned tile found.",
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void TileSelectUI_VisibleChanged(object sender, EventArgs e)

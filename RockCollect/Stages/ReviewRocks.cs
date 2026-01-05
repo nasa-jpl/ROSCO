@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -27,12 +28,18 @@ namespace RockCollect.Stages
         int NumTilesHorizontal;
         int NumTilesVertical;
 
-        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory)
+        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory, Workflow workflow)
         {
-            base.Init(log, stageDirectory, finalOutputDirectory);
+            base.Init(log, stageDirectory, finalOutputDirectory, workflow);
 
             settings = new RockDetector.Settings();
             settings.Confidence = RockDetector.DEFAULT_CONFIDENCE;
+        }
+
+        public void ResetToDefaults(out RockDetector.DetectionResults results)
+        {
+            settings.Confidence = RockDetector.DEFAULT_CONFIDENCE;
+            UpdateDetections(out results, out DetectionsBitmap);
         }
 
         public override UserControl CreateUI()
@@ -88,6 +95,14 @@ namespace RockCollect.Stages
             settings.MinShadowSplit = float.Parse(inData.Data["MINSHADOWSPLIT"]);
             settings.GammaThresholdOverride = int.Parse(inData.Data["GAMMA_THRESHOLD_OVERRIDE"]);
 
+            string tileJson = GetTileJSON();
+            if (File.Exists(tileJson))
+            {
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
+                GetFloatSetting(existing, "CONFIDENCE", RockDetector.MIN_VALID_CONFIDENCE,
+                                RockDetector.MAX_VALID_CONFIDENCE, v => { settings.Confidence = v; });
+            }
+
             UpdateDetections(out RockDetector.DetectionResults results, out DetectionsBitmap);
 
             TileIndex = int.Parse(inData.Data["TILE_INDEX"]);
@@ -103,11 +118,14 @@ namespace RockCollect.Stages
                     ComparisonDetectionsBitmap = UpdateDetectionsBitmap(comparisonDetections.outRocks);
                 }
             }
-            catch
-            {
-            }
+            catch { }
 
             return true;
+        }
+
+        private string GetTileJSON()
+        {
+            return GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
         }
 
         internal Bitmap GetIdenticalDetectionsImage()
@@ -441,89 +459,73 @@ namespace RockCollect.Stages
             }
         }
 
-        static public string GetTileOutputName(int tileIndex, int numTilesHorizontal)
+        string GetTileOutputName(int tileIndex)
         {
-            TileSelect.GetTileAddress(tileIndex, numTilesHorizontal, out int tileCol, out int tileRow);
-            return string.Format("Tile_{0}_{1}", tileCol.ToString("D6"), tileRow.ToString("D6"));
+            GetTileAddress(tileIndex, NumTilesHorizontal, out int tileCol, out int tileRow);
+            return GetTileOutputName(tileCol, tileRow);
         }
 
         public string GetOutRockslistPath()
         {
-            return Path.Combine(GetDirectory(Dir.Output),
-                                GetTileOutputName(TileIndex, NumTilesHorizontal) + "_Rocks.txt");
+            return Path.Combine(GetDirectory(Dir.Output), GetTileOutputName(TileIndex) + "_Rocks.txt");
         }
 
         public string GetOutRocksParamsPath()
         {
-            return Path.Combine(GetDirectory(Dir.Output),
-                                GetTileOutputName(TileIndex, NumTilesHorizontal) + "_Params.txt");
+            return Path.Combine(GetDirectory(Dir.Output), GetTileOutputName(TileIndex) + "_Params.txt");
         }
 
         public override string GetOutputJSONPath()
         {
-            return Path.Combine(GetDirectory(Dir.Output),
-                                GetTileOutputName(TileIndex, NumTilesHorizontal) + ".json");
+            GetTileAddress(TileIndex, NumTilesHorizontal, out int tileCol, out int tileRow);
+            return GetTileJSON(tileCol, tileRow);
         }
 
         public override bool SaveOutput()
         {
             //TODO: save previous
-
+            
             string outRocksListPath = GetOutRockslistPath();
-            if (File.Exists(outRocksListPath))
-            {
-                File.Delete(outRocksListPath);
-            }
-
+            if (File.Exists(outRocksListPath)) File.Delete(outRocksListPath);
+            
             string outJSONPath = GetOutputJSONPath();
-            if (File.Exists(outJSONPath))
-            {
-                File.Delete(outJSONPath);
-            }
-
+            if (File.Exists(outJSONPath)) File.Delete(outJSONPath);
+            
             string outParamsPath = GetOutRocksParamsPath();
-            if (File.Exists(outParamsPath))
-            {
-                File.Delete(outParamsPath);
-            }
+            if (File.Exists(outParamsPath)) File.Delete(outParamsPath);
+            
+            if (!base.SaveOutput()) return false;
 
-            if (base.SaveOutput())
-            {
-                settings.Write(this.outData.Data);
+            settings.Write(this.outData.Data);
+            
+            InputToOutput("IMAGE_PATH");
+            InputToOutput("TILE_PATH");
+            InputToOutput("TILE_INDEX");
+            InputToOutput("TILE_COL");
+            InputToOutput("TILE_ROW");
+            InputToOutput("TILE_GROUP");
+            InputToOutput("TILES_HORIZONTAL");
+            InputToOutput("TILES_VERTICAL");
+            InputToOutput("COMPARISON_ROCKLIST");
+            
+            Console.WriteLine(string.Format("saving detection settings for tile to \"{0}\" and \"{1}\"",
+                                            outJSONPath, outParamsPath));
 
-                InputToOutput("IMAGE_PATH");
-                InputToOutput("TILE_PATH");
-                InputToOutput("TILE_INDEX");
-                InputToOutput("TILE_COL");
-                InputToOutput("TILE_ROW");
-                InputToOutput("TILE_GROUP");
-                InputToOutput("TILES_HORIZONTAL");
-                InputToOutput("TILES_VERTICAL");
-                InputToOutput("COMPARISON_ROCKLIST");
-
-                Console.WriteLine(string.Format("saving detection settings for tile to \"{0}\" and \"{1}\"",
-                                                outJSONPath, outParamsPath));
-
-                if (!WriteOutputJSON())
-                    return false;
-
-                RockDetector.INSETTINGS inSettings = RockDetector.CreateInSettings(settings);
-                if (0 == RockDetector.write_param_file(outParamsPath, ref inSettings))
-                {
-                    return false;
-                }
-
-                Console.WriteLine(string.Format("running rock detector on tile, saving rock list to \"{0}\"",
-                                                outRocksListPath));
-
-                if(0 == RockDetector.detect_from_files(TilePath, outParamsPath, outRocksListPath))
-                {
-                    return false;
-                }
-
-                return true;
-            }
-            return false;
+            //since this is the last stage, instead of writing "output.json"
+            //to the stage output directory, typically under Sessions/
+            //WriteOutputJSON() here is specialized to write the tile settings to Tile_CCCCCC_RRRRRR.json
+            //in the final output directory, typically under ImgeOutput/
+            if (!WriteOutputJSON()) return false;
+            
+            RockDetector.INSETTINGS inSettings = RockDetector.CreateInSettings(settings);
+            if (0 == RockDetector.write_param_file(outParamsPath, ref inSettings)) return false;
+            
+            Console.WriteLine(string.Format("running rock detector on tile, saving rock list to \"{0}\"",
+                                            outRocksListPath));
+            
+            if (0 == RockDetector.detect_from_files(TilePath, outParamsPath, outRocksListPath)) return false;
+            
+            return true;
         }
     }
 }

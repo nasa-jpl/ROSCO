@@ -191,12 +191,19 @@
     <Compile Include="Stages\TileSelectUI.Designer.cs">
       <DependentUpon>TileSelectUI.cs</DependentUpon>
     </Compile>
+    <Compile Include="ChooseTile.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="ChooseTile.Designer.cs">
+      <DependentUpon>ChooseTile.cs</DependentUpon>
+    </Compile>
     <Compile Include="StatusWindow.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="StatusWindow.Designer.cs">
       <DependentUpon>StatusWindow.cs</DependentUpon>
     </Compile>
+    <Compile Include="Util.cs" />
     <Compile Include="Workflow.cs" />
     <EmbeddedResource Include="Form1.resx">
       <DependentUpon>Form1.cs</DependentUpon>
@@ -233,6 +240,9 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Stages\TileSelectUI.resx">
       <DependentUpon>TileSelectUI.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="ChooseTile.resx">
+      <DependentUpon>ChooseTile.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="StatusWindow.resx">
       <DependentUpon>StatusWindow.cs</DependentUpon>

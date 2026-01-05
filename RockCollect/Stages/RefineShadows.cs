@@ -4,6 +4,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -21,9 +22,9 @@ namespace RockCollect.Stages
 
         RockDetector.Settings settings;
 
-        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory)
+        public override void Init(Logger log, string stageDirectory, string finalOutputDirectory, Workflow workflow)
         {
-            base.Init(log, stageDirectory, finalOutputDirectory);
+            base.Init(log, stageDirectory, finalOutputDirectory, workflow);
 
             settings = new RockDetector.Settings();
 
@@ -32,6 +33,16 @@ namespace RockCollect.Stages
             settings.ShadowAspect = RockDetector.DEFAULT_ASPECT;
             settings.MeanGradient = RockDetector.DEFAULT_GRADIENT;
             settings.MinShadowSplit = RockDetector.DEFAULT_SPLIT;
+        }
+
+        public void ResetToDefaults(out RockDetector.DetectionResults results)
+        {
+            settings.MinShadowArea = RockDetector.DEFAULT_MIN_SHADOW_AREA;
+            settings.MaxShadowArea = RockDetector.DEFAULT_MAX_SHADOW_AREA;
+            settings.ShadowAspect = RockDetector.DEFAULT_ASPECT;
+            settings.MeanGradient = RockDetector.DEFAULT_GRADIENT;
+            settings.MinShadowSplit = RockDetector.DEFAULT_SPLIT;
+            UpdateDetections(out results);
         }
 
         public override UserControl CreateUI()
@@ -96,8 +107,30 @@ namespace RockCollect.Stages
 
             ShadowImage = ImageThreshold.CreateOverlayImage(TileImage, ShadowImage, 0); //red
 
+            string tileJson = GetTileJSON();
+            if (File.Exists(tileJson))
+            {
+                var existing = JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson)).Data;
+                GetFloatSetting(existing, "MINSHADOWAREA", RockDetector.MIN_VALID_MIN_SHADOW_AREA,
+                                RockDetector.MAX_VALID_MIN_SHADOW_AREA, v => { settings.MinShadowArea = v; });
+                GetFloatSetting(existing, "MAXSHADOWAREA", RockDetector.MIN_VALID_MAX_SHADOW_AREA,
+                                RockDetector.MAX_VALID_MAX_SHADOW_AREA, v => { settings.MaxShadowArea = v; });
+                GetFloatSetting(existing, "SHADOWASPECT", RockDetector.MIN_VALID_ASPECT, RockDetector.MAX_VALID_ASPECT,
+                                v => { settings.ShadowAspect = v; });
+                GetFloatSetting(existing, "MEANGRADIENT", RockDetector.MIN_VALID_MEAN_GRADIENT,
+                                RockDetector.MAX_VALID_MEAN_GRADIENT, v => { settings.MeanGradient = v; });
+                GetFloatSetting(existing, "MINSHADOWSPLIT", RockDetector.MIN_VALID_SPLIT, RockDetector.MAX_VALID_SPLIT,
+                                v => { settings.MinShadowSplit = v; });
+            }
+
             UpdateDetections(out RockDetector.DetectionResults results);
+
             return true;
+        }
+
+        private string GetTileJSON()
+        {
+            return GetTileJSON(int.Parse(inData.Data["TILE_COL"]), int.Parse(inData.Data["TILE_ROW"]));
         }
 
         private void UpdateCurrentBlobsImage(Dictionary<int, List<int>> lookup)
@@ -129,8 +162,7 @@ namespace RockCollect.Stages
         {
             results = null;
 
-            if (string.IsNullOrEmpty(TilePath))
-                return false;
+            if (string.IsNullOrEmpty(TilePath)) return false;
 
             results = new RockDetector.DetectionResults("Shadows", TileImage.Width, TileImage.Height);
 
@@ -253,26 +285,37 @@ namespace RockCollect.Stages
 
         public override bool SaveOutput()
         {
-            if (base.SaveOutput())
-            {
-                InputToOutput("IMAGE_PATH");
-                InputToOutput("TILE_PATH");
-                InputToOutput("TILE_INDEX");
-                InputToOutput("TILE_COL");
-                InputToOutput("TILE_ROW");
-                InputToOutput("TILE_GROUP");
-                InputToOutput("TILES_HORIZONTAL");
-                InputToOutput("TILES_VERTICAL");
-                InputToOutput("COMPARISON_ROCKLIST");
+            if (!base.SaveOutput()) return false;
+            
+            InputToOutput("IMAGE_PATH");
+            InputToOutput("TILE_PATH");
+            InputToOutput("TILE_INDEX");
+            InputToOutput("TILE_COL");
+            InputToOutput("TILE_ROW");
+            InputToOutput("TILE_GROUP");
+            InputToOutput("TILES_HORIZONTAL");
+            InputToOutput("TILES_VERTICAL");
+            InputToOutput("COMPARISON_ROCKLIST");
+            
+            settings.Write(this.outData.Data);
+            
+            if (!WriteOutputJSON()) return false;
+            
+            string tileJson = GetTileJSON();
+            StageData tileData =
+                File.Exists(tileJson) ? JsonSerializer.Deserialize<StageData>(File.ReadAllText(tileJson))
+                : new StageData();
 
-                settings.Write(this.outData.Data);
+            tileData.Data["MINSHADOWAREA"] = settings.MinShadowArea.ToString();
+            tileData.Data["MAXSHADOWAREA"] = settings.MaxShadowArea.ToString();
+            tileData.Data["SHADOWASPECT"] = settings.ShadowAspect.ToString();
+            tileData.Data["MEANGRADIENT"] = settings.MeanGradient.ToString();
+            tileData.Data["MINSHADOWSPLIT"] = settings.MinShadowSplit.ToString();
 
-                if (!WriteOutputJSON())
-                    return false;
+            var options = new JsonSerializerOptions { WriteIndented = true };
+            File.WriteAllText(tileJson, JsonSerializer.Serialize(tileData, tileData.GetType(), options));
 
-                return true;
-            }
-            return false;
+            return true;
         }
     }
 }

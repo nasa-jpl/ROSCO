@@ -20,11 +20,12 @@ namespace RockCollect.Stages
             InitializeComponent();
             shadowsUI = (RefineShadowsUI)refineShadowsUI;
             shadowsUI.Stage.OnTeardownStatusUI = () => {
-                if (this.pictureBoxSelectedShadow.Image != null)
+                System.Drawing.Image old = this.pictureBoxSelectedShadow.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxSelectedShadow.Image.Dispose();
                     this.pictureBoxSelectedShadow.Image = null;
+                    old.Dispose();
                 }
             };
         }
@@ -45,7 +46,7 @@ namespace RockCollect.Stages
                 }
             }
 
-            if(sourceBitmap != null)
+            if (sourceBitmap != null)
             {
                 ((IDisposable)sourceBitmap).Dispose();                
                 sourceBitmap = null;
@@ -114,11 +115,12 @@ namespace RockCollect.Stages
             {
                 shadowsUI.SetSelectedShadowsUI(-1, Results);
 
-                //if (this.pictureBoxSelectedShadow.Image != null)
-                //{
-                //    ((IDisposable)this.pictureBoxSelectedShadow.Image).Dispose();
-                //    this.pictureBoxSelectedShadow.Image = null;
-                //}                
+                System.Drawing.Image old = this.pictureBoxSelectedShadow.Image;
+                if (old != null)
+                {
+                    this.pictureBoxSelectedShadow.Image = null;
+                    old.Dispose();
+                }                
             }
             else
             {
@@ -209,14 +211,14 @@ namespace RockCollect.Stages
 
                 }
 
-                if (this.pictureBoxSelectedShadow.Image != null)
+                System.Drawing.Image old = this.pictureBoxSelectedShadow.Image;
+                if (old != null)
                 {
-                    this.pictureBoxSelectedShadow.Image.Dispose();
-                }
+                    this.pictureBoxSelectedShadow.Image = null;
+                    old.Dispose();
+                }                
 
                 this.pictureBoxSelectedShadow.Image = selectedBitmap;
-
-                selectedBitmap.Dispose();
             }
         }
     }

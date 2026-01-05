@@ -3,41 +3,58 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace RockCollect
 {
-    class Workflow
+    public class Workflow
     {
         private List<Stage> Stages;
         private int ActiveStageIndex = -1;
         private string SessionDirectory;
-        private string CurImageDirectory;
-        private string OutputDirectory;
+        private string FinalOutputDirectory;
         private Panel WorkArea;
         private Logger Log;
         private Form StatusForm;
-        public Workflow(string outputDirectory, string sessionDirectory, Panel workArea, Form statusForm, List<Stage> stages)
+        public Workflow(string outputDirectory, string sessionDirectory, Panel workArea, Form statusForm,
+                        List<Stage> stages)
         {
             SessionDirectory = sessionDirectory;
             Stages = stages;
             WorkArea = workArea;
             StatusForm = statusForm;
-            OutputDirectory = outputDirectory;
             Log = new Logger(Path.Combine(sessionDirectory, "log.txt"));
 
             for (int idx = 0; idx < Stages.Count; idx++)
             {
                 var stage = stages.ElementAt(idx);
-                stage.Init(Log, Path.Combine(sessionDirectory, string.Format("{0}_{1}", idx.ToString("D2"), stage.GetName())), OutputDirectory);
+                string stageDir = Path.Combine(sessionDirectory,
+                                               string.Format("{0}_{1}", idx.ToString("D2"), stage.GetName()));
+                stage.Init(Log, stageDir, outputDirectory, this);
             }
         }
 
+        public int AtStage() { return ActiveStageIndex; }
+
         public bool AtFirstStage() { return ActiveStageIndex == 0; }
+
         public bool AtLastStage() { return ActiveStageIndex == Stages.Count - 1; }
 
         public bool AtValidStage() { return ActiveStageIndex >= 0 && ActiveStageIndex < Stages.Count; }
+
+        public void SetFinalOutputDirectory(string dir)
+        {
+            if (!AtFirstStage())
+            {
+                throw new Exception("cannot change final output directory after first stage");
+            }
+            foreach (Stage stage in Stages)
+            {
+                stage.SetFinalOutputDirectory(dir); 
+            }
+        }
 
         public void RefreshDirectoriesForStagesFrom(int stageIndex)
         {
@@ -50,7 +67,8 @@ namespace RockCollect
 
             if (stageIndex > 0)
             {
-                Files.CopyDirectory(Stages.ElementAt(stageIndex-1).GetDirectory(Stage.Dir.Output), Stages.ElementAt(stageIndex).GetDirectory(Stage.Dir.Input), false);
+                Files.CopyDirectory(Stages.ElementAt(stageIndex-1).GetDirectory(Stage.Dir.Output),
+                                    Stages.ElementAt(stageIndex).GetDirectory(Stage.Dir.Input), false);
             }
         }
 
@@ -60,19 +78,53 @@ namespace RockCollect
 
             if (AtValidStage())
             {
-                if (false == activeStage.Deactivate(true))
-                    return;
+                if (!activeStage.Deactivate(true)) return;
             }
 
             if (AtFirstStage())
             {
-                //create image directory
-                CurImageDirectory = Path.Combine(OutputDirectory, Path.GetFileNameWithoutExtension(activeStage.outData.Data["IMAGE_PATH"]));
-                if (!Directory.Exists(CurImageDirectory))
+                FinalOutputDirectory = activeStage.GetFinalOutputDirectory();
+
+                if (!Directory.Exists(FinalOutputDirectory))
                 {
-                    Directory.CreateDirectory(CurImageDirectory);
+                    Directory.CreateDirectory(FinalOutputDirectory);
                 }
-                Console.WriteLine("saving per-tile settings and results at \"{0}\"", CurImageDirectory);
+                else
+                {
+                    Regex tileRegex = new Regex(@"^Tile_\d+_\d+.json$");
+
+                    int numExisting = Directory.GetFiles(FinalOutputDirectory)
+                        .Where(path => tileRegex.IsMatch(Path.GetFileName(path)))
+                        .Count();
+
+                    Console.WriteLine("found {0} existing tile settings", numExisting);
+
+                    if (numExisting > 0)
+                    {
+                        string savePath = null;
+                        for (int i = 0; savePath == null; i++)
+                        {
+                            savePath = string.Format("{0}_SAVE_{1}", FinalOutputDirectory, i);
+                            if (Directory.Exists(savePath) || File.Exists(savePath)) savePath = null;
+                        }
+
+                        DialogResult result =
+                            MessageBox.Show(string.Format("Use {0} existing tile settings at {1}?  " +
+                                                          "If not they will be moved to {2}.",
+                                                          numExisting, FinalOutputDirectory, savePath),
+                                            "Use Existing Tiles", MessageBoxButtons.YesNo, MessageBoxIcon.Question); 
+                        if (result == DialogResult.No)
+                        {
+                            Directory.Move(FinalOutputDirectory, savePath);
+                            Directory.CreateDirectory(FinalOutputDirectory);
+                            MessageBox.Show(string.Format("Archived existing tile settings from {0} to {1}.",
+                                                          FinalOutputDirectory, savePath),
+                                            "Moved Existing Tiles");
+                        }
+                    }
+                }
+
+                Console.WriteLine("saving per-tile settings at \"{0}\"", FinalOutputDirectory);
             }
 
             Stage nextStage = null;
@@ -83,7 +135,8 @@ namespace RockCollect
 
                 if (activeStage != null)
                 {
-                    Files.CopyDirectory(activeStage.GetDirectory(Stage.Dir.Output), nextStage.GetDirectory(Stage.Dir.Input));
+                    Files.CopyDirectory(activeStage.GetDirectory(Stage.Dir.Output),
+                                        nextStage.GetDirectory(Stage.Dir.Input));
                 }
             }
             else
@@ -94,7 +147,7 @@ namespace RockCollect
                 //save final output
                 if (activeStage != null)
                 {
-                    Files.CopyDirectory(activeStage.GetDirectory(Stage.Dir.Output), CurImageDirectory, false);
+                    Files.CopyDirectory(activeStage.GetDirectory(Stage.Dir.Output), FinalOutputDirectory, false);
                 }
 
                 //refresh directories for repeating stages
@@ -110,8 +163,7 @@ namespace RockCollect
             if (AtValidStage() && !AtFirstStage())
             {
                 activeStage = Stages.ElementAt(ActiveStageIndex);
-                if (false == activeStage.Deactivate(false))
-                    return;
+                if (!activeStage.Deactivate(false)) return;
 
                 ActiveStageIndex--;
                 Stage nextStage = Stages.ElementAt(ActiveStageIndex);

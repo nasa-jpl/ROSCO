@@ -30,20 +30,54 @@ namespace RockCollect
         public StageData inData;
         public StageData outData;
 
+        public Workflow ParentWorkflow;
+
         public Action OnTeardownUI;
         public Action OnTeardownStatusUI;
 
         public enum Dir { Stage, Input, Output, Debug, FinalOutput};
-        
-        public virtual void Init(Logger log,  string stageDirectory, string finalOutputDirectory)
+
+        public static bool GetFloatSetting(Dictionary<string, string> settings, string key, float min, float max,
+                                           Action<float> action)
+        {
+            if (!settings.ContainsKey(key)) return false;
+
+            float v;
+            try { v = float.Parse(settings[key]); }
+            catch (FormatException) { return false; }
+
+            if (v < min || v > max) return false;
+
+            action(v);
+
+            return true;
+        }
+
+        public static bool GetIntSetting(Dictionary<string, string> settings, string key, int min, int max,
+                                         Action<int> action)
+        {
+            if (!settings.ContainsKey(key)) return false;
+
+            int v;
+            try { v = int.Parse(settings[key]); }
+            catch (FormatException) { return false; }
+
+            if (v < min || v > max) return false;
+
+            action(v);
+
+            return true;
+        }
+
+        public virtual void Init(Logger log,  string stageDirectory, string finalOutputDirectory, Workflow workflow)
         {
             Log = log;
             StageDir = stageDirectory;
             FinalOutputDir = finalOutputDirectory;
             inData = new StageData();
             outData = new StageData();
+            ParentWorkflow = workflow;
                
-
             EnsureDirectories();
         }
 
@@ -78,29 +112,38 @@ namespace RockCollect
             return false;
         }
 
+        public void SetFinalOutputDirectory(string dir)
+        {
+            FinalOutputDir = dir;
+        }
+
+        public string GetFinalOutputDirectory(string imagePath)
+        {
+            string dir = FinalOutputDir.TrimEnd(new char[] { '/', '\\' });
+
+            if (string.IsNullOrEmpty(imagePath)) return dir;
+
+            string imageName = Path.GetFileNameWithoutExtension(imagePath);
+            if (!dir.EndsWith(imageName)) dir = Path.Combine(dir, imageName);
+
+            return dir;
+        }
+
+        public virtual string GetFinalOutputDirectory()
+        {
+            return GetFinalOutputDirectory(inData.Data.ContainsKey("IMAGE_PATH") ? inData.Data["IMAGE_PATH"] : null);
+        }
+
         public string GetDirectory(Dir dir)
         {
             switch (dir)
             {
-                case Dir.Stage:
-                    return StageDir;
-                case Dir.Input:
-                    return Path.Combine(StageDir, "Input");
-                case Dir.Output:
-                    return Path.Combine(StageDir, "Output");
-                case Dir.Debug:
-                    return Path.Combine(StageDir, "Logs");
-                case Dir.FinalOutput:
-                    if(inData.Data.ContainsKey("IMAGE_PATH"))
-                    {
-                        return Path.Combine(FinalOutputDir, Path.GetFileNameWithoutExtension(inData.Data["IMAGE_PATH"]));
-                    }
-                    else
-                    {
-                        return FinalOutputDir;
-                    }
-                default:
-                    throw new Exception("Unknown directory type");
+                case Dir.Stage: return StageDir;
+                case Dir.Input: return Path.Combine(StageDir, "Input");
+                case Dir.Output: return Path.Combine(StageDir, "Output");
+                case Dir.Debug: return Path.Combine(StageDir, "Logs");
+                case Dir.FinalOutput: return GetFinalOutputDirectory();
+                default: throw new Exception("Unknown directory type");
             }
         }
 
@@ -114,6 +157,29 @@ namespace RockCollect
                     Directory.CreateDirectory(dir);
                 }
             }
+        }
+
+        //index -> col, row
+        public static void GetTileAddress(int index, int numTilesHorizontal, out int tileCol, out int tileRow)
+        {
+            tileCol = index % numTilesHorizontal;
+            tileRow = index / numTilesHorizontal;
+        }
+
+        //col, row -> index
+        public static int GetTileIndex(int col, int row, int numTilesHorizontal)
+        {
+            return row * numTilesHorizontal + col;
+        }
+
+        public static string GetTileOutputName(int tileCol, int tileRow)
+        {
+            return string.Format("Tile_{0}_{1}", tileCol.ToString("D6"), tileRow.ToString("D6"));
+        }
+
+        public string GetTileJSON(int tileCol, int tileRow)
+        {
+            return Path.Combine(GetDirectory(Dir.FinalOutput), GetTileOutputName(tileCol, tileRow) + ".json");
         }
 
         public virtual bool Activate(Panel workArea, Form statusForm, bool forward)
@@ -132,10 +198,8 @@ namespace RockCollect
         
         public virtual bool Deactivate(bool forward)
         {
-            if (false == SaveOutput())
-                return false;
-            if (false == TeardownUI())
-                return false;
+            if (!SaveOutput()) return false;
+            if (!TeardownUI()) return false;
             return true;
         }
 
@@ -223,10 +287,7 @@ namespace RockCollect
 
         public bool WriteOutputJSON()
         {
-            var options = new JsonSerializerOptions
-            {
-                WriteIndented = true
-            };
+            var options = new JsonSerializerOptions { WriteIndented = true };
             string jsonString = JsonSerializer.Serialize(outData, outData.GetType(), options);
             File.WriteAllText(this.GetOutputJSONPath(), jsonString);
             return true;

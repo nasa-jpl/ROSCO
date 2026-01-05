@@ -12,6 +12,8 @@ namespace RockCollect.Stages
 {
     public partial class ImageThresholdUI : UserControl
     {
+        bool resetting = false;
+
         public ImageThreshold Stage;
 
         public ImageThresholdUI(ImageThreshold stage)
@@ -19,11 +21,12 @@ namespace RockCollect.Stages
             InitializeComponent();
             Stage = stage;
             stage.OnTeardownUI = () => {
-                if (this.pictureBoxTile.Image != null)
+                System.Drawing.Image old = this.pictureBoxTile.Image;
+                if (old != null)
                 {
                     //attempt to avoid intermittent System.ArgumentException: Parameter is not valid.
-                    this.pictureBoxTile.Image.Dispose();
                     this.pictureBoxTile.Image = null;
+                    old.Dispose();
                 }
             };
         }
@@ -48,15 +51,15 @@ namespace RockCollect.Stages
                 bmp = Stage.GetOverlayBitmap();
             }
 
-            //if(this.pictureBoxTile.Image != null)
-            //{
-            //    this.pictureBoxTile.Image.Dispose();
-            //}
+            System.Drawing.Image old = this.pictureBoxTile.Image;
+            if (old != null)
+            {
+                this.pictureBoxTile.Image = null;
+                old.Dispose();
+            }
 
             this.pictureBoxTile.Image = bmp;
             
-            //bmp.Dispose();
-
             this.labelGammaVal.Text = Stage.GetGamma().ToString("F2");
             this.labelThresholdVal.Text = Stage.GetThresholdOverride().ToString();
 
@@ -70,47 +73,50 @@ namespace RockCollect.Stages
 
         int GammaToTrackBarValue(float gamma)
         {
-            float curStageGammaPct = (gamma - ImageThreshold.MIN_GAMMA) / (ImageThreshold.MAX_GAMMA - ImageThreshold.MIN_GAMMA);
+            float curStageGammaPct = (gamma - RockDetector.MIN_VALID_GAMMA) / (RockDetector.MAX_VALID_GAMMA - RockDetector.MIN_VALID_GAMMA);
             return (int)(curStageGammaPct * (trackBarGamma.Maximum - trackBarGamma.Minimum) + trackBarGamma.Minimum);
         }
 
         float TrackBarValueToGamma(int trackbarVal)
         {
             float trackbarPct = (trackbarVal - trackBarGamma.Minimum) / (float)(trackBarGamma.Maximum - trackBarGamma.Minimum);
-            return trackbarPct * (ImageThreshold.MAX_GAMMA - ImageThreshold.MIN_GAMMA) + ImageThreshold.MIN_GAMMA;
+            return trackbarPct * (RockDetector.MAX_VALID_GAMMA - RockDetector.MIN_VALID_GAMMA) + RockDetector.MIN_VALID_GAMMA;
         }
 
         private void ImageThresholdUI_Load(object sender, EventArgs e)
         {
+            resetting = true;
             this.trackBarGamma.Value = GammaToTrackBarValue(Stage.GetGamma());
             this.trackBarThreshold.Value = Stage.GetThresholdOverride();
+            resetting = false;
             RefreshUI(true);
-        }
-
-        private void trackBarThreshold_ValueChanged(object sender, EventArgs e)
-        {
-            Stage.SetThresholdOverride(trackBarThreshold.Value);
-            RefreshUI();
-        }
-
-        private void trackBarGamma_ValueChanged(object sender, EventArgs e)
-        {
-            Stage.SetGamma(TrackBarValueToGamma(trackBarGamma.Value));
-            RefreshUI();
         }
 
         private void ImageThresholdUI_VisibleChanged(object sender, EventArgs e)
         {
             if (this.Visible == true)
             {
-                this.trackBarGamma.Value = GammaToTrackBarValue(Stage.GetGamma());
-                this.trackBarThreshold.Value = Stage.GetThresholdOverride();
                 RefreshUI(true);
             }
         }
 
+        private void trackBarThreshold_ValueChanged(object sender, EventArgs e)
+        {
+            if (resetting) return;
+            Stage.SetThresholdOverride(trackBarThreshold.Value);
+            RefreshUI();
+        }
+
+        private void trackBarGamma_ValueChanged(object sender, EventArgs e)
+        {
+            if (resetting) return;
+            Stage.SetGamma(TrackBarValueToGamma(trackBarGamma.Value));
+            RefreshUI();
+        }
+
         private void radioButtonInput_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if(radioButtonInput.Checked)
             {
                 RefreshUI();
@@ -119,6 +125,7 @@ namespace RockCollect.Stages
 
         private void radioButtonGamma_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonGamma.Checked)
             {
                 RefreshUI();
@@ -127,6 +134,7 @@ namespace RockCollect.Stages
 
         private void radioButtonGammaThresh_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonGammaThresh.Checked)
             {
                 RefreshUI();
@@ -135,6 +143,7 @@ namespace RockCollect.Stages
 
         private void radioButtonFinalOverlay_CheckedChanged(object sender, EventArgs e)
         {
+            if (resetting) return;
             if (radioButtonFinalOverlay.Checked)
             {
                 RefreshUI();
@@ -143,8 +152,19 @@ namespace RockCollect.Stages
 
         private void trackBarThreshold_ValueChanged_1(object sender, EventArgs e)
         {
+            if (resetting) return;
             Stage.SetThresholdOverride(trackBarThreshold.Value);
             RefreshUI();
+        }
+
+        private void buttonReset_Click(object sender, EventArgs e)
+        {
+            resetting = true;
+            Stage.ResetToDefaults();
+            trackBarGamma.Value = GammaToTrackBarValue(Stage.GetGamma());
+            trackBarThreshold.Value = Stage.GetThresholdOverride();
+            RefreshUI(true);
+            resetting = false;
         }
     }
 }

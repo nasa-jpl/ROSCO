@@ -44,6 +44,7 @@
             this.trackBarThreshold = new System.Windows.Forms.TrackBar();
             this.labelThresholdVal = new System.Windows.Forms.Label();
             this.labelThreshold = new System.Windows.Forms.Label();
+            this.buttonReset = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBoxTile)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.trackBarGamma)).BeginInit();
             this.groupBox1.SuspendLayout();
@@ -151,9 +152,9 @@
             this.groupBox1.Controls.Add(this.radioButtonGamma);
             this.groupBox1.Controls.Add(this.radioButtonInput);
             this.groupBox1.Location = new System.Drawing.Point(580, 232);
-            this.groupBox1.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Margin = new System.Windows.Forms.Padding(2);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Padding = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.groupBox1.Padding = new System.Windows.Forms.Padding(2);
             this.groupBox1.Size = new System.Drawing.Size(246, 140);
             this.groupBox1.TabIndex = 19;
             this.groupBox1.TabStop = false;
@@ -164,7 +165,7 @@
             this.radioButtonFinalOverlay.AutoSize = true;
             this.radioButtonFinalOverlay.Checked = true;
             this.radioButtonFinalOverlay.Location = new System.Drawing.Point(10, 106);
-            this.radioButtonFinalOverlay.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonFinalOverlay.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonFinalOverlay.Name = "radioButtonFinalOverlay";
             this.radioButtonFinalOverlay.Size = new System.Drawing.Size(86, 17);
             this.radioButtonFinalOverlay.TabIndex = 7;
@@ -177,7 +178,7 @@
             // 
             this.radioButtonGammaThresh.AutoSize = true;
             this.radioButtonGammaThresh.Location = new System.Drawing.Point(10, 81);
-            this.radioButtonGammaThresh.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonGammaThresh.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonGammaThresh.Name = "radioButtonGammaThresh";
             this.radioButtonGammaThresh.Size = new System.Drawing.Size(132, 17);
             this.radioButtonGammaThresh.TabIndex = 6;
@@ -189,7 +190,7 @@
             // 
             this.radioButtonGamma.AutoSize = true;
             this.radioButtonGamma.Location = new System.Drawing.Point(10, 56);
-            this.radioButtonGamma.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonGamma.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonGamma.Name = "radioButtonGamma";
             this.radioButtonGamma.Size = new System.Drawing.Size(83, 17);
             this.radioButtonGamma.TabIndex = 5;
@@ -201,7 +202,7 @@
             // 
             this.radioButtonInput.AutoSize = true;
             this.radioButtonInput.Location = new System.Drawing.Point(10, 30);
-            this.radioButtonInput.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.radioButtonInput.Margin = new System.Windows.Forms.Padding(2);
             this.radioButtonInput.Name = "radioButtonInput";
             this.radioButtonInput.Size = new System.Drawing.Size(81, 17);
             this.radioButtonInput.TabIndex = 4;
@@ -240,10 +241,22 @@
             this.labelThreshold.TabIndex = 21;
             this.labelThreshold.Text = "Threshold Override";
             // 
+            // buttonReset
+            // 
+            this.buttonReset.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.buttonReset.Location = new System.Drawing.Point(576, 472);
+            this.buttonReset.Name = "buttonReset";
+            this.buttonReset.Size = new System.Drawing.Size(250, 23);
+            this.buttonReset.TabIndex = 23;
+            this.buttonReset.Text = "Reset to Defaults";
+            this.buttonReset.UseVisualStyleBackColor = true;
+            this.buttonReset.Click += new System.EventHandler(this.buttonReset_Click);
+            // 
             // ImageThresholdUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.buttonReset);
             this.Controls.Add(this.labelThresholdVal);
             this.Controls.Add(this.labelThreshold);
             this.Controls.Add(this.trackBarThreshold);
@@ -289,5 +302,6 @@
         private System.Windows.Forms.TrackBar trackBarThreshold;
         private System.Windows.Forms.Label labelThresholdVal;
         private System.Windows.Forms.Label labelThreshold;
+        private System.Windows.Forms.Button buttonReset;
     }
 }
