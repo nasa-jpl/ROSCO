@@ -8,6 +8,11 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using NetTopologySuite.Geometries;
+using NetTopologySuite.IO.Esri;
+using NetTopologySuite.IO.Esri.Dbf.Fields;
+using NetTopologySuite.IO.Esri.Shapefiles.Writers;
+
 namespace RockCollect.Stages
 {
     public class TileSelect : Stage
@@ -627,6 +632,25 @@ namespace RockCollect.Stages
             
             RockDetector.detect_per_tile_settings(ImagePath, fileName, numTiles, inSettings);
             //TODO: warn
+
+            if (!File.Exists(fileName))
+            {
+                MessageBox.Show(string.Format("Rocklist file not found \"{0}\"", fileName),
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            try
+            {
+                RockListToShapeFile(fileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format("Error converting rocklist \"{0}\" to shape file: {1}",
+                                              fileName, ex.Message),
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
         }
 
         public string GetImageName()
@@ -938,6 +962,160 @@ namespace RockCollect.Stages
             if (int.TryParse(str, out int result)) return result;
             throw new Exception(string.Format("error parsing \"{0}\" as int in field {1} \"{2}\"",
                                               str, fieldNum, fieldName));
+        }
+
+        void RockListToShapeFile(string path)
+        {
+            foreach (string ext in new string[] { ".shp", ".shx", ".dbf" })
+            {
+                string file = Path.ChangeExtension(path, ext);
+                if (File.Exists(file))
+                {
+                    throw new Exception(string.Format("Cannot overwrite existing file \"{0}\"", file));
+                }
+            }
+
+            const string expectedColumns = "id, tileR, tileC, shaX, shaY, rockX, rockY, tileShaX, tileShaY, shaArea, shaLen, rockWidth, rockHeight, score, gradMean, Compact, Exent, Class, gamma";
+
+            var rocks = new List<RockDetector.OUTROCK>();
+            bool foundColumnHeader = false;
+            bool foundGsd = false;
+            float gsd = 0.0f;
+            int lineNumber = 0;
+
+            foreach (string line in File.ReadLines(path))
+            {
+                lineNumber++;
+
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                if (!foundColumnHeader && line.TrimStart().StartsWith("version"))
+                {
+                    continue;
+                }
+
+                if (!foundColumnHeader && line.TrimStart().StartsWith("%"))
+                {
+                    if (!foundGsd && line.Contains("GSD_resolution"))
+                    {
+                        string[] parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length < 2)
+                        {
+                            throw new Exception(string.Format(
+                                "Invalid GSD_resolution format at line {0}: expected whitespace followed by a number",
+                                lineNumber));
+                        }
+
+                        string valueStr = parts[parts.Length - 1];
+                        if (!float.TryParse(valueStr, out gsd))
+                        {
+                            throw new Exception(string.Format("Failed to parse GSD_resolution at line {0}: \"{1}\"",
+                                                              lineNumber, valueStr));
+                        }
+
+                        foundGsd = true;
+                    }
+                    continue;
+                }
+
+                if (!foundColumnHeader)
+                {
+                    if (line != expectedColumns)
+                    {
+                        throw new Exception(string.Format("Column names mismatch at line {0}.\nExpected: {1}\nGot: {2}",
+                                                          lineNumber, expectedColumns, line));
+                    }
+
+                    if (!foundGsd)
+                    {
+                        throw new Exception("GSD_resolution header not found in file");
+                    }
+
+                    foundColumnHeader = true;
+                    continue;
+                }
+
+                string[] values = line.Split(',');
+                if (values.Length != 19)
+                {
+                    throw new Exception(string.Format("Expected 19 values at line {0}, got {1}",
+                                                      lineNumber, values.Length));
+                }
+
+                try
+                {
+                    var rock = new RockDetector.OUTROCK
+                    {
+                        id = int.Parse(values[0].Trim()),
+                        tileR = int.Parse(values[1].Trim()),
+                        tileC = int.Parse(values[2].Trim()),
+                        shaX = float.Parse(values[3].Trim()),
+                        shaY = float.Parse(values[4].Trim()),
+                        rockX = float.Parse(values[5].Trim()),
+                        rockY = float.Parse(values[6].Trim()),
+                        tileShaX = float.Parse(values[7].Trim()),
+                        tileShaY = float.Parse(values[8].Trim()),
+                        shaArea = int.Parse(values[9].Trim()),
+                        shaLen = float.Parse(values[10].Trim()),
+                        rockWidth = float.Parse(values[11].Trim()),
+                        rockHeight = float.Parse(values[12].Trim()),
+                        score = float.Parse(values[13].Trim()),
+                        gradMean = float.Parse(values[14].Trim()),
+                        compact = float.Parse(values[15].Trim()),
+                        extent = float.Parse(values[16].Trim()),
+                        Class = int.Parse(values[17].Trim()),
+                        gamma = float.Parse(values[18].Trim())
+                    };
+                    rocks.Add(rock);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(string.Format("Error parsing line {0}: {1}", lineNumber, ex.Message));
+                }
+            }
+
+            if (!foundColumnHeader)
+            {
+                throw new Exception("No column header found in file");
+            }
+
+            if (rocks.Count() == 0)
+            {
+                throw new Exception("Empty rocklist");
+            }
+            
+            var fields = new List<DbfField>();
+            var dateField = fields.AddDateField("date");
+            var floatField = fields.AddFloatField("float");
+            var intField = fields.AddNumericInt32Field("int");
+            var logicalField = fields.AddLogicalField("logical");
+            var textField = fields.AddCharacterField("text");
+            
+            var options = new ShapefileWriterOptions(ShapeType.PolyLine, fields.ToArray());
+            using (var shpWriter = Shapefile.OpenWrite(Path.ChangeExtension(path, ".shp"), options))
+            {
+                for (var i = 1; i < 5; i++)
+                {
+                    var lineCoords = new List<Coordinate>
+                    {
+                        new Coordinate(i, i + 1),
+                        new Coordinate(i, i),
+                        new Coordinate(i + 1, i)
+                    };
+                    var line = new LineString(lineCoords.ToArray());
+                    var mline = new MultiLineString(new LineString[] { line });
+                    
+                    int? nullIntValue = null;
+                    
+                    shpWriter.Geometry = mline;
+                    dateField.DateValue = DateTime.Now;
+                    floatField.NumericValue = i * 0.1;
+                    intField.NumericValue = nullIntValue;
+                    logicalField.LogicalValue = i % 2 == 0;
+                    textField.StringValue = i.ToString("0.00");
+                    shpWriter.Write();
+                }
+            }
         }
     }
 }
