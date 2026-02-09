@@ -1085,35 +1085,70 @@ namespace RockCollect.Stages
             }
             
             var fields = new List<DbfField>();
-            var dateField = fields.AddDateField("date");
-            var floatField = fields.AddFloatField("float");
-            var intField = fields.AddNumericInt32Field("int");
-            var logicalField = fields.AddLogicalField("logical");
-            var textField = fields.AddCharacterField("text");
+            var idField = fields.AddNumericInt32Field("id");
+            var tileRField = fields.AddNumericInt32Field("tileR");
+            var tileCField = fields.AddNumericInt32Field("tileC");
+            var shaXField = fields.AddFloatField("shaX");
+            var shaYField = fields.AddFloatField("shaY");
+            var rockXField = fields.AddFloatField("rockX");
+            var rockYField = fields.AddFloatField("rockY");
+            var tileShaXField = fields.AddFloatField("tileShaX");
+            var tileShaYField = fields.AddFloatField("tileShaY");
+            var shaAreaField = fields.AddNumericInt32Field("shaArea");
+            var shaLenField = fields.AddFloatField("shaLen");
+            var rockWidthField = fields.AddFloatField("rockWidth");
+            var rockHeightField = fields.AddFloatField("rockHeight");
+            var scoreField = fields.AddFloatField("score");
+            var gradMeanField = fields.AddFloatField("gradMean");
+            var compactField = fields.AddFloatField("compact");
+            var extentField = fields.AddFloatField("extent");
+            var classField = fields.AddNumericInt32Field("Class");
+            var gammaField = fields.AddFloatField("gamma");
+            var diamMField = fields.AddFloatField("diamM");
+            var radiusField = fields.AddFloatField("radius");
+            var radiusMField = fields.AddFloatField("radiusM");
             
-            var options = new ShapefileWriterOptions(ShapeType.PolyLine, fields.ToArray());
-            using (var shpWriter = Shapefile.OpenWrite(Path.ChangeExtension(path, ".shp"), options))
+            var options = new ShapefileWriterOptions(ShapeType.Polygon, fields.ToArray());
+            using (var writer = Shapefile.OpenWrite(Path.ChangeExtension(path, ".shp"), options))
             {
-                for (var i = 1; i < 5; i++)
+                foreach (RockDetector.OUTROCK rock in rocks)
                 {
-                    var lineCoords = new List<Coordinate>
+                    const int numSides = 18;
+                    var coords = new Coordinate[numSides + 1];
+                    double radius = rock.rockWidth / 2.0;
+                    for (int i = 0; i <= numSides; i++)
                     {
-                        new Coordinate(i, i + 1),
-                        new Coordinate(i, i),
-                        new Coordinate(i + 1, i)
-                    };
-                    var line = new LineString(lineCoords.ToArray());
-                    var mline = new MultiLineString(new LineString[] { line });
-                    
-                    int? nullIntValue = null;
-                    
-                    shpWriter.Geometry = mline;
-                    dateField.DateValue = DateTime.Now;
-                    floatField.NumericValue = i * 0.1;
-                    intField.NumericValue = nullIntValue;
-                    logicalField.LogicalValue = i % 2 == 0;
-                    textField.StringValue = i.ToString("0.00");
-                    shpWriter.Write();
+                        double angle = 2.0 * Math.PI * i / numSides;
+                        double x = rock.rockX + radius * Math.Cos(angle);
+                        double y = -rock.rockY + radius * Math.Sin(angle);
+                        coords[i] = new Coordinate(x, y);
+                    }
+                    writer.Geometry = new Polygon(new LinearRing(coords));
+
+                    idField.NumericValue = rock.id;
+                    tileRField.NumericValue = rock.tileR;
+                    tileCField.NumericValue = rock.tileC;
+                    shaXField.NumericValue = rock.shaX;
+                    shaYField.NumericValue = rock.shaY;
+                    rockXField.NumericValue = rock.rockX;
+                    rockYField.NumericValue = rock.rockY;
+                    tileShaXField.NumericValue = rock.tileShaX;
+                    tileShaYField.NumericValue = rock.tileShaY;
+                    shaAreaField.NumericValue = rock.shaArea;
+                    shaLenField.NumericValue = rock.shaLen;
+                    rockWidthField.NumericValue = rock.rockWidth;
+                    rockHeightField.NumericValue = rock.rockHeight;
+                    scoreField.NumericValue = rock.score;
+                    gradMeanField.NumericValue = rock.gradMean;
+                    compactField.NumericValue = rock.compact;
+                    extentField.NumericValue = rock.extent;
+                    classField.NumericValue = rock.Class;
+                    gammaField.NumericValue = rock.gamma;
+                    diamMField.NumericValue = gsd * rock.rockWidth;
+                    radiusField.NumericValue = rock.rockWidth / 2;
+                    radiusMField.NumericValue = gsd * rock.rockWidth / 2;
+
+                    writer.Write();
                 }
             }
         }
