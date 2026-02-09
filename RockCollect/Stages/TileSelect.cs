@@ -646,7 +646,7 @@ namespace RockCollect.Stages
             }
             catch (Exception ex)
             {
-                MessageBox.Show(string.Format("Error converting rocklist \"{0}\" to shape file: {1}",
+                MessageBox.Show(string.Format("Error converting rocklist {0} to shape file: {1}",
                                               fileName, ex.Message),
                                 "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
@@ -966,12 +966,33 @@ namespace RockCollect.Stages
 
         void RockListToShapeFile(string path)
         {
-            foreach (string ext in new string[] { ".shp", ".shx", ".dbf" })
+            string shpPath = Path.ChangeExtension(path, ".shp");
+
+            Console.WriteLine(string.Format("Converting rock list {0} to shape file {1}", path, shpPath));
+
+            if (File.Exists(shpPath))
             {
-                string file = Path.ChangeExtension(path, ext);
-                if (File.Exists(file))
+                var result = MessageBox.Show(
+                    string.Format("Shape file {0} already exists. Do you want to overwrite it?", shpPath),
+                    "Overwrite Existing File", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.No)
                 {
-                    throw new Exception(string.Format("Cannot overwrite existing file \"{0}\"", file));
+                    throw new Exception(string.Format("Not overwriting existing {0}", shpPath));
+                }
+
+                File.Delete(shpPath);
+
+                string shxPath = Path.ChangeExtension(path, ".shx");
+                if (File.Exists(shxPath))
+                {
+                    File.Delete(shxPath);
+                }
+
+                string dbfPath = Path.ChangeExtension(path, ".dbf");
+                if (File.Exists(dbfPath))
+                {
+                    File.Delete(dbfPath);
                 }
             }
 
@@ -1074,6 +1095,8 @@ namespace RockCollect.Stages
                 }
             }
 
+            Console.WriteLine(string.Format("Loaded rock list {0} with {1} rocks, gsd={2}", path, rocks.Count(), gsd));
+
             if (!foundColumnHeader)
             {
                 throw new Exception("No column header found in file");
@@ -1083,7 +1106,12 @@ namespace RockCollect.Stages
             {
                 throw new Exception("Empty rocklist");
             }
-            
+
+            //now write an ESRI shape file containing all the rocks and their metadata
+            //the specifics here mimic the functionality of original matlab script rocklist2shapefileNOMAP.m
+            //by Marshall Trautman
+            //the original script is attached to https://github.com/nasa-jpl/ROSCO/issues/7
+
             var fields = new List<DbfField>();
             var idField = fields.AddNumericInt32Field("id");
             var tileRField = fields.AddNumericInt32Field("tileR");
@@ -1107,9 +1135,11 @@ namespace RockCollect.Stages
             var diamMField = fields.AddFloatField("diamM");
             var radiusField = fields.AddFloatField("radius");
             var radiusMField = fields.AddFloatField("radiusM");
-            
+
+            Console.WriteLine(string.Format("Saving shape file {0}...", shpPath));
+
             var options = new ShapefileWriterOptions(ShapeType.Polygon, fields.ToArray());
-            using (var writer = Shapefile.OpenWrite(Path.ChangeExtension(path, ".shp"), options))
+            using (var writer = Shapefile.OpenWrite(shpPath, options))
             {
                 foreach (RockDetector.OUTROCK rock in rocks)
                 {
@@ -1118,6 +1148,8 @@ namespace RockCollect.Stages
                     double radius = rock.rockWidth / 2.0;
                     for (int i = 0; i <= numSides; i++)
                     {
+                        //the negative y coordinate here replicates the functionality of original matlab code
+                        //in readrockList.m by Marshall Trautman
                         double angle = 2.0 * Math.PI * i / numSides;
                         double x = rock.rockX + radius * Math.Cos(angle);
                         double y = -rock.rockY + radius * Math.Sin(angle);
@@ -1151,6 +1183,8 @@ namespace RockCollect.Stages
                     writer.Write();
                 }
             }
+
+            Console.WriteLine(string.Format("Saved {0} rocks to shape file {1}", rocks.Count(), shpPath));
         }
     }
 }
