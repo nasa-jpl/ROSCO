@@ -126,7 +126,6 @@
     <Reference Include="WindowsBase" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Dbf.cs" />
     <Compile Include="Rocklist\CombinedRockListParser.cs" />
     <Compile Include="Rocklist\CurrentRockListParser.cs" />
     <Compile Include="Files.cs" />

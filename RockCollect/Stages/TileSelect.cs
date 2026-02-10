@@ -9,7 +9,9 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 
 using NetTopologySuite.Geometries;
+using NetTopologySuite.Features;
 using NetTopologySuite.IO.Esri;
+using NetTopologySuite.IO.Esri.Dbf;
 using NetTopologySuite.IO.Esri.Dbf.Fields;
 using NetTopologySuite.IO.Esri.Shapefiles.Writers;
 
@@ -869,22 +871,23 @@ namespace RockCollect.Stages
             string dbfFilePath = Path.ChangeExtension(shapeFilePath, ".dbf");
 
             if (!File.Exists(dbfFilePath))
-                throw new Exception(string.Format("Shape file {0} doesn't exist", dbfFilePath));
-
-            var dbf = Kaitai.Dbf.FromFile(dbfFilePath);
-            //Console.WriteLine("num fields: " + dbf.Header2.Fields.Count);
-            //Console.WriteLine("num records: " + dbf.Records.Count);
-
-            int tileXField = -1;
-            int tileYField = -1;
-            int runField = -1;
-            int visitField = -1;
-            int groupField = -1;
-
-            for (int i = 0; i < dbf.Header2.Fields.Count; i++)
             {
-                var f = dbf.Header2.Fields[i];
-                //Console.WriteLine(f.Name + " " + (char)f.Datatype);
+                throw new Exception(string.Format("Shape file {0} doesn't exist", dbfFilePath));
+            }
+
+            var dbf = new DbfReader(dbfFilePath);
+            Console.WriteLine(string.Format("Loading DBF {0} with {1} fields, {2} records",
+                                            dbfFilePath, dbf.Fields.Count, dbf.RecordCount));
+
+            bool hasTileXField = false;
+            bool hasTileYField = false;
+            bool hasRunField = false, runIsBool = false;
+            bool hasVisitField = false, visitIsBool = false;
+            bool hasGroupField = false;
+
+            foreach (var f in dbf.Fields)
+            {
+                //Console.WriteLine(string.Format("DBF {0} field {1} has type {2}", dbfFilePath, f.Name, f.FieldType));
                 //tile_num_x N
                 //tile_num_y N
                 //tl_px_col N
@@ -892,78 +895,91 @@ namespace RockCollect.Stages
                 //run C
                 //visit C
                 //group C
-                if (f.Name == "tile_num_x" && f.Datatype == 'N') tileXField = i;
-                else if (f.Name == "tile_num_y" && f.Datatype == 'N') tileYField = i;
-                else if (f.Name == "run" && f.Datatype == 'C') runField = i;
-                else if (f.Name == "visit" && f.Datatype == 'C') visitField = i;
-                else if (f.Name == "group" && f.Datatype == 'C') groupField = i;
+                if (f.Name == "tile_num_x" && f.FieldType == DbfType.Numeric)
+                {
+                    hasTileXField = true;
+                }
+                else if (f.Name == "tile_num_y" && f.FieldType == DbfType.Numeric)
+                {
+                    hasTileYField = true;
+                }
+                else if (f.Name == "run" && (f.FieldType == DbfType.Character || f.FieldType == DbfType.Logical))
+                {
+                    hasRunField = true;
+                    runIsBool = f.FieldType == DbfType.Logical;
+                }
+                else if (f.Name == "visit" && (f.FieldType == DbfType.Character || f.FieldType == DbfType.Logical))
+                {
+                    hasVisitField = true;
+                    visitIsBool = f.FieldType == DbfType.Logical;
+                }
+                else if (f.Name == "group" && f.FieldType == DbfType.Character)
+                {
+                    hasGroupField = true;
+                }
             }
-
-            if (tileXField < 0) throw new Exception("missing numeric field tile_num_x in " + dbfFilePath);
-            if (tileYField < 0) throw new Exception("missing numeric field tile_num_y in " + dbfFilePath);
-            if (runField < 0) throw new Exception("missing character field run in " + dbfFilePath);
-            if (visitField < 0) throw new Exception("missing character field visit in " + dbfFilePath);
-            if (groupField < 0) throw new Exception("missing character field group in " + dbfFilePath);
+                         
+            if (!hasTileXField) throw new Exception("missing numeric field tile_num_x in " + dbfFilePath);
+            if (!hasTileYField) throw new Exception("missing numeric field tile_num_y in " + dbfFilePath);
+            if (!hasRunField) throw new Exception("missing character field run in " + dbfFilePath);
+            if (!hasVisitField) throw new Exception("missing character field visit in " + dbfFilePath);
+            if (!hasGroupField) throw new Exception("missing character field group in " + dbfFilePath);
 
             int nt = TilesHorizontal * TilesVertical;
-            if (dbf.Records.Count != nt)
+            if (dbf.RecordCount != nt)
             {
                 throw new Exception(string.Format("expected {0} rows in {1} for {2}x{3} tiles, got {4} rows",
-                                                  nt, dbfFilePath, TilesHorizontal, TilesVertical, dbf.Records.Count));
+                                                  nt, dbfFilePath, TilesHorizontal, TilesVertical, dbf.RecordCount));
             }
 
             TileShapeData = new ShapeData[nt];
             var tilesToVisit = new HashSet<int>();
+            int tilesToRun = 0;
 
-            for (int i = 0; i < nt; i++)
+            var groups = new HashSet<string>();
+            int n = 0;
+            foreach (var r in dbf)
             {
-                var r = dbf.Records[i];
-                if (r.RecordFields.Count != dbf.Header2.Fields.Count)
+                if (r.Count != dbf.Fields.Count)
                 {
                     throw new Exception(string.Format("expected {0} fields for record {1} in {2}, got {3} fields",
-                                                      dbf.Header2.Fields.Count, i, dbfFilePath, r.RecordFields.Count));
+                                                      dbf.Fields.Count, n, dbfFilePath, r.Count));
                 }
                 try
                 {
-                    int x = DbfParseInt(r.RecordFields[tileXField], "tile_num_x", tileXField);
-                    int y = DbfParseInt(r.RecordFields[tileYField], "tile_num_y", tileYField);
-                    bool v = DbfParseBool(r.RecordFields[visitField], "visit", visitField);
-                    bool u = DbfParseBool(r.RecordFields[runField], "run", runField);
-                    string g = DbfParseString(r.RecordFields[groupField]);
+                    int x = Convert.ToInt32(r["tile_num_x"]);
+                    int y = Convert.ToInt32(r["tile_num_y"]);
+                    bool v = DbfParseBool(r, "visit", visitIsBool);
+                    bool u = DbfParseBool(r, "run", runIsBool);
+                    string g = (string)(r["group"]);
                     int idx = GetTileIndex(x, y);
                     TileShapeData[idx] = new ShapeData { tileX = x, tileY = y, visit = v, run = u, grp = g };
-                    if (v) tilesToVisit.Add(i);
+                    if (v) tilesToVisit.Add(idx);
+                    if (u) tilesToRun++;
+                    groups.Add(g);
                 } catch (Exception ex) {
                     System.Windows.Forms.MessageBox.Show(
-                        string.Format("Error parsing record {0} in {1}: {2}.", i, dbfFilePath, ex.Message),
+                        string.Format("Error parsing record {0} in {1}: {2}.", n, dbfFilePath, ex.Message),
                         "Shape File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+                n++;
             }
+
+            Console.WriteLine(string.Format("Loaded DBF file {0} with {1} tiles: " +
+                                            "{2} groups, {3} tiles to visit, {4} tiles to run",
+                                            dbfFilePath, n, groups.Count, tilesToVisit.Count, tilesToRun));
 
             remainingTilesToTune = remainingTilesToTune.Where(tile => tilesToVisit.Contains(tile)).ToList();
         }
         
-        string DbfParseString(byte[] data)
+        bool DbfParseBool(IAttributesTable record, string fieldName, bool isLogical)
         {
-            return System.Text.Encoding.UTF8.GetString(data, 0, data.Length).Trim();
+            if (isLogical) return (bool)(record[fieldName]);
+            string str = (string)(record[fieldName]);
+            if (bool.TryParse(str, out bool b)) return b;
+            throw new Exception(string.Format("error parsing \"{0}\" as boolean in field {1}", str, fieldName));
         }
         
-        bool DbfParseBool(byte[] data, string fieldName, int fieldNum)
-        {
-            string str = DbfParseString(data);
-            if (bool.TryParse(str, out bool result)) return result;
-            throw new Exception(string.Format("error parsing \"{0}\" as bool in field {1} \"{2}\"",
-                                              str, fieldNum, fieldName));
-        }
-        
-        int DbfParseInt(byte[] data, string fieldName, int fieldNum)
-        {
-            string str = DbfParseString(data);
-            if (int.TryParse(str, out int result)) return result;
-            throw new Exception(string.Format("error parsing \"{0}\" as int in field {1} \"{2}\"",
-                                              str, fieldNum, fieldName));
-        }
-
         void RockListToShapeFile(string path)
         {
             string shpPath = Path.ChangeExtension(path, ".shp");
