@@ -15,6 +15,8 @@ namespace RockCollect.Stages
     {
         ChooseImage Stage;
 
+        private string edrIndexPath;
+
         public ChooseImageUI(ChooseImage stage)
         {
             InitializeComponent();
@@ -22,8 +24,16 @@ namespace RockCollect.Stages
             Stage.SetGroundSamplingDistance((float)numericGSD.Value);
             Stage.SetSolarIncidence((float)numericIncidence.Value);
             Stage.SetSubSolarAzimuth((float)numericAzimuth.Value);
-            labelStatusStorageFolder.Text =
-                "Storge Folder: " + stage.GetFinalOutputDirectory(null);
+
+            labelStatusStorageFolder.Text = "Storge Folder: " + stage.GetFinalOutputDirectory(null);
+
+            string defEDRIndex = "EDRCUMINDEX.TAB";
+            if (File.Exists(defEDRIndex))
+            {
+                edrIndexPath = defEDRIndex;
+                labelStatusEDRIndex.Text = "EDR Index: " + defEDRIndex;
+                buttonAutoFillFromEDRIndex.Enabled = true;
+            }
         }
 
         private void buttonNewSession_Click(object sender, EventArgs e)
@@ -37,9 +47,8 @@ namespace RockCollect.Stages
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    Stage.SetNewImage(openFileDialog.FileName);
-                    this.labelStatusImage.Text =
-                        "Image Selected: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
+                    Stage.SetImagePath(openFileDialog.FileName);
+                    labelStatusImage.Text = "Image Selected: " + openFileDialog.FileName;
                 }
             }
         }
@@ -53,8 +62,25 @@ namespace RockCollect.Stages
                 if (dialog.ShowDialog() == DialogResult.OK)
                 {
                     Stage.ParentWorkflow.SetFinalOutputDirectory(dialog.SelectedPath);
-                    labelStatusStorageFolder.Text =
-                        "Storge Folder: " + Stage.GetFinalOutputDirectory(null);
+                    labelStatusStorageFolder.Text = "Storge Folder: " + Stage.GetFinalOutputDirectory(null);
+                }
+            }
+        }
+
+        private void buttonEDRIndex_Click(object sender, EventArgs e)
+        {
+            using (OpenFileDialog openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.InitialDirectory = Directory.GetCurrentDirectory();
+                openFileDialog.Filter = "EDR Index (*.TAB)|All files (*.*)|*.*";
+                openFileDialog.FilterIndex = 1;
+                openFileDialog.RestoreDirectory = false;
+
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    edrIndexPath = openFileDialog.FileName;
+                    labelStatusEDRIndex.Text = "EDR Index: " + openFileDialog.FileName;
+                    buttonAutoFillFromEDRIndex.Enabled = true;
                 }
             }
         }
@@ -85,23 +111,135 @@ namespace RockCollect.Stages
 
                 if (openFileDialog.ShowDialog() == DialogResult.OK)
                 {
-                    try
-                    {
-                        Rocklist rocklist = new Rocklist(openFileDialog.FileName);
-                        Stage.SetComparisonRocklist(openFileDialog.FileName);
-                        this.labelStatusRocklist.Text =
-                            "Rocklist Selected: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
-                        numericGSD.Value = (decimal)rocklist.paramList.GSD_resolution;
-                        numericIncidence.Value = (decimal)rocklist.paramList.sun_incidence_angle;
-                        numericAzimuth.Value = (decimal)rocklist.paramList.sun_azimuth_angle;
-                    }
-                    catch
-                    {
-                        this.labelStatusRocklist.Text =
-                            "Failed to parse rocklist: " + Path.GetFileNameWithoutExtension(openFileDialog.FileName);
-                    }
+                    Stage.SetComparisonRocklist(openFileDialog.FileName);
+                    labelStatusRocklist.Text = "Rocklist Selected: " + openFileDialog.FileName;
+                    buttonAutoFillFromComparisonRocklist.Enabled = true;
                 }
             }
+        }
+
+        private void buttonAutoFillFromComparisonRocklist_Click(object sender, EventArgs e)
+        {
+            string path = Stage.GetComparisonRocklist();
+            if (string.IsNullOrEmpty(path))
+            {
+                return;
+            }
+            
+            try
+            {
+                Rocklist rocklist = new Rocklist(path);
+                numericGSD.Value = (decimal)rocklist.paramList.GSD_resolution;
+                numericIncidence.Value = (decimal)rocklist.paramList.sun_incidence_angle;
+                numericAzimuth.Value = (decimal)rocklist.paramList.sun_azimuth_angle;
+            }
+            catch
+            {
+                MessageBox.Show("Failed to parse rocklist: " + path,
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void buttonAutoFillFromEDRIndex_Click(object sender, EventArgs e)
+        {
+            string path = Stage.GetImagePath();
+            if (string.IsNullOrEmpty(path) || string.IsNullOrEmpty(edrIndexPath))
+            {
+                return;
+            }
+
+            if (!File.Exists(edrIndexPath))
+            {
+                MessageBox.Show("EDR Index not found: " + edrIndexPath,
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string imageFile = Path.GetFileNameWithoutExtension(path);
+            string imageID = imageFile.Contains('.') ? imageFile.Split(new char[] { '.' }, 2)[0] : imageFile;
+            if (!imageID.EndsWith("_RED"))
+            {
+                imageID = imageID + "_RED";
+            }
+
+            float gsd = float.MaxValue;
+            float incidence = float.MaxValue;
+            float azimuth = float.MaxValue;
+
+            try
+            {
+                //this approach is translated from get_rosco_info.py by Marshall Trautman
+
+                //https://hirise-pds.lpl.arizona.edu/PDS/INDEX/EDRCUMINDEX.TAB 
+                //https://hirise-pds.lpl.arizona.edu/PDS/INDEX/EDRCUMINDEX.LBL
+
+                bool foundMatch = false;
+
+                using (StreamReader reader = new StreamReader(edrIndexPath))
+                {
+                    string line;
+                    while ((line = reader.ReadLine()) != null)
+                    {
+                        if (line.Contains(imageID) && line.Length >= 889)
+                        {
+                            foundMatch = true;
+
+                            //field info from EDRCUMINDEX.LBL; START_BYTE is 1 based
+                            //SCALED_PIXEL_WIDTH START_BYTE = 733 BYTES = 17
+                            string gsdStr = line.Substring(732, 17).Trim();
+                            if (float.TryParse(gsdStr, out float gsdVal) && gsdVal < gsd)
+                            {
+                                gsd = gsdVal;
+                            }
+
+                            //INCIDENCE_ANGLE START_BYTE = 760 BYTES = 7
+                            string incStr = line.Substring(759, 7).Trim();
+                            if (float.TryParse(incStr, out float incVal) && incVal < incidence)
+                            {
+                                incidence = incVal;
+                            }
+
+                            //SUB_SOLAR_AZIMUTH START_BYTE = 880 BYTES = 10
+                            string azStr = line.Substring(879, 10).Trim();
+                            if (float.TryParse(azStr, out float azVal) && azVal < azimuth)
+                            {
+                                azimuth = azVal;
+                            }
+                        }
+                    }
+                }
+
+                if (!foundMatch)
+                {
+                    MessageBox.Show(string.Format("Image ID {0} not found in EDR Index {1}", imageID, edrIndexPath),
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                if (gsd == float.MaxValue || incidence == float.MaxValue || azimuth == float.MaxValue)
+                {
+                    MessageBox.Show(string.Format("Failed to parse valid values for Image ID {0} from EDR Index {1}",
+                                                  imageID, edrIndexPath),
+                                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                azimuth = 180 - azimuth;
+                if (azimuth < 0)
+                {
+                    azimuth += 360;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to parse EDR Index: " + edrIndexPath + "\n" + ex.Message,
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            numericGSD.Value = (decimal)gsd;
+            numericIncidence.Value = (decimal)incidence;
+            numericAzimuth.Value = (decimal)azimuth;
         }
 
         private void buttonShapeFile_Click(object sender, EventArgs e)
@@ -128,7 +266,6 @@ namespace RockCollect.Stages
 
         private void ROSCO_TITLE_Click(object sender, EventArgs e)
         {
-
         }
     }
 }

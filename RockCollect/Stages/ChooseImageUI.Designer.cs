@@ -49,6 +49,10 @@
             this.labelStatusStorageFolder = new System.Windows.Forms.Label();
             this.buttonStorageFolder = new System.Windows.Forms.Button();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.labelStatusEDRIndex = new System.Windows.Forms.Label();
+            this.buttonEDRIndex = new System.Windows.Forms.Button();
+            this.buttonAutoFillFromEDRIndex = new System.Windows.Forms.Button();
+            this.buttonAutoFillFromComparisonRocklist = new System.Windows.Forms.Button();
             ((System.ComponentModel.ISupportInitialize)(this.numericGSD)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericIncidence)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericAzimuth)).BeginInit();
@@ -69,7 +73,7 @@
             // numericGSD
             // 
             this.numericGSD.DecimalPlaces = 5;
-            this.numericGSD.Location = new System.Drawing.Point(158, 303);
+            this.numericGSD.Location = new System.Drawing.Point(165, 353);
             this.numericGSD.Margin = new System.Windows.Forms.Padding(2);
             this.numericGSD.Name = "numericGSD";
             this.numericGSD.Size = new System.Drawing.Size(88, 20);
@@ -85,7 +89,7 @@
             // numericIncidence
             // 
             this.numericIncidence.DecimalPlaces = 5;
-            this.numericIncidence.Location = new System.Drawing.Point(158, 338);
+            this.numericIncidence.Location = new System.Drawing.Point(165, 388);
             this.numericIncidence.Margin = new System.Windows.Forms.Padding(2);
             this.numericIncidence.Maximum = new decimal(new int[] {
             360,
@@ -106,7 +110,7 @@
             // numericAzimuth
             // 
             this.numericAzimuth.DecimalPlaces = 5;
-            this.numericAzimuth.Location = new System.Drawing.Point(158, 377);
+            this.numericAzimuth.Location = new System.Drawing.Point(165, 427);
             this.numericAzimuth.Margin = new System.Windows.Forms.Padding(2);
             this.numericAzimuth.Maximum = new decimal(new int[] {
             360,
@@ -127,7 +131,7 @@
             // labelGSD
             // 
             this.labelGSD.AutoSize = true;
-            this.labelGSD.Location = new System.Drawing.Point(21, 306);
+            this.labelGSD.Location = new System.Drawing.Point(28, 356);
             this.labelGSD.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelGSD.Name = "labelGSD";
             this.labelGSD.Size = new System.Drawing.Size(133, 13);
@@ -137,7 +141,7 @@
             // labelUnitsGSD
             // 
             this.labelUnitsGSD.AutoSize = true;
-            this.labelUnitsGSD.Location = new System.Drawing.Point(256, 306);
+            this.labelUnitsGSD.Location = new System.Drawing.Point(263, 356);
             this.labelUnitsGSD.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelUnitsGSD.Name = "labelUnitsGSD";
             this.labelUnitsGSD.Size = new System.Drawing.Size(80, 13);
@@ -147,7 +151,7 @@
             // labelIncidence
             // 
             this.labelIncidence.AutoSize = true;
-            this.labelIncidence.Location = new System.Drawing.Point(21, 342);
+            this.labelIncidence.Location = new System.Drawing.Point(28, 392);
             this.labelIncidence.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelIncidence.Name = "labelIncidence";
             this.labelIncidence.Size = new System.Drawing.Size(106, 13);
@@ -157,7 +161,7 @@
             // labelUnitsIncidence
             // 
             this.labelUnitsIncidence.AutoSize = true;
-            this.labelUnitsIncidence.Location = new System.Drawing.Point(256, 342);
+            this.labelUnitsIncidence.Location = new System.Drawing.Point(263, 392);
             this.labelUnitsIncidence.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelUnitsIncidence.Name = "labelUnitsIncidence";
             this.labelUnitsIncidence.Size = new System.Drawing.Size(45, 13);
@@ -167,7 +171,7 @@
             // labelSubSolar
             // 
             this.labelSubSolar.AutoSize = true;
-            this.labelSubSolar.Location = new System.Drawing.Point(21, 379);
+            this.labelSubSolar.Location = new System.Drawing.Point(28, 429);
             this.labelSubSolar.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelSubSolar.Name = "labelSubSolar";
             this.labelSubSolar.Size = new System.Drawing.Size(121, 13);
@@ -177,7 +181,7 @@
             // labelUnitsSubsolar
             // 
             this.labelUnitsSubsolar.AutoSize = true;
-            this.labelUnitsSubsolar.Location = new System.Drawing.Point(256, 379);
+            this.labelUnitsSubsolar.Location = new System.Drawing.Point(263, 429);
             this.labelUnitsSubsolar.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.labelUnitsSubsolar.Name = "labelUnitsSubsolar";
             this.labelUnitsSubsolar.Size = new System.Drawing.Size(45, 13);
@@ -281,17 +285,66 @@
             // pictureBox1
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(525, 297);
+            this.pictureBox1.Location = new System.Drawing.Point(585, 338);
             this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(300, 300);
+            this.pictureBox1.Size = new System.Drawing.Size(250, 250);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
             this.pictureBox1.TabIndex = 19;
             this.pictureBox1.TabStop = false;
+            // 
+            // labelStatusEDRIndex
+            // 
+            this.labelStatusEDRIndex.AutoSize = true;
+            this.labelStatusEDRIndex.Location = new System.Drawing.Point(232, 309);
+            this.labelStatusEDRIndex.Name = "labelStatusEDRIndex";
+            this.labelStatusEDRIndex.Size = new System.Drawing.Size(62, 13);
+            this.labelStatusEDRIndex.TabIndex = 21;
+            this.labelStatusEDRIndex.Text = "EDR Index:";
+            this.labelStatusEDRIndex.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            // 
+            // buttonEDRIndex
+            // 
+            this.buttonEDRIndex.Location = new System.Drawing.Point(24, 300);
+            this.buttonEDRIndex.Margin = new System.Windows.Forms.Padding(2);
+            this.buttonEDRIndex.Name = "buttonEDRIndex";
+            this.buttonEDRIndex.Size = new System.Drawing.Size(184, 31);
+            this.buttonEDRIndex.TabIndex = 20;
+            this.buttonEDRIndex.Text = "Select EDR Index";
+            this.buttonEDRIndex.UseVisualStyleBackColor = true;
+            this.buttonEDRIndex.Click += new System.EventHandler(this.buttonEDRIndex_Click);
+            // 
+            // buttonAutoFillFromEDRIndex
+            // 
+            this.buttonAutoFillFromEDRIndex.Enabled = false;
+            this.buttonAutoFillFromEDRIndex.Location = new System.Drawing.Point(347, 356);
+            this.buttonAutoFillFromEDRIndex.Margin = new System.Windows.Forms.Padding(2);
+            this.buttonAutoFillFromEDRIndex.Name = "buttonAutoFillFromEDRIndex";
+            this.buttonAutoFillFromEDRIndex.Size = new System.Drawing.Size(76, 94);
+            this.buttonAutoFillFromEDRIndex.TabIndex = 22;
+            this.buttonAutoFillFromEDRIndex.Text = "Auto Fill From EDR Index";
+            this.buttonAutoFillFromEDRIndex.UseVisualStyleBackColor = true;
+            this.buttonAutoFillFromEDRIndex.Click += new System.EventHandler(this.buttonAutoFillFromEDRIndex_Click);
+            // 
+            // buttonAutoFillFromComparisonRocklist
+            // 
+            this.buttonAutoFillFromComparisonRocklist.Enabled = false;
+            this.buttonAutoFillFromComparisonRocklist.Location = new System.Drawing.Point(427, 356);
+            this.buttonAutoFillFromComparisonRocklist.Margin = new System.Windows.Forms.Padding(2);
+            this.buttonAutoFillFromComparisonRocklist.Name = "buttonAutoFillFromComparisonRocklist";
+            this.buttonAutoFillFromComparisonRocklist.Size = new System.Drawing.Size(76, 94);
+            this.buttonAutoFillFromComparisonRocklist.TabIndex = 23;
+            this.buttonAutoFillFromComparisonRocklist.Text = "Auto Fill From Comparison Rocklist";
+            this.buttonAutoFillFromComparisonRocklist.UseVisualStyleBackColor = true;
+            this.buttonAutoFillFromComparisonRocklist.Click += new System.EventHandler(this.buttonAutoFillFromComparisonRocklist_Click);
             // 
             // ChooseImageUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.buttonAutoFillFromComparisonRocklist);
+            this.Controls.Add(this.buttonAutoFillFromEDRIndex);
+            this.Controls.Add(this.labelStatusEDRIndex);
+            this.Controls.Add(this.buttonEDRIndex);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.labelStatusStorageFolder);
             this.Controls.Add(this.buttonStorageFolder);
@@ -348,5 +401,9 @@
         private System.Windows.Forms.Label labelStatusStorageFolder;
         private System.Windows.Forms.Button buttonStorageFolder;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Label labelStatusEDRIndex;
+        private System.Windows.Forms.Button buttonEDRIndex;
+        private System.Windows.Forms.Button buttonAutoFillFromEDRIndex;
+        private System.Windows.Forms.Button buttonAutoFillFromComparisonRocklist;
     }
 }
