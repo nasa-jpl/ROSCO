@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChooseImageUI));
             this.buttonNewSession = new System.Windows.Forms.Button();
             this.numericGSD = new System.Windows.Forms.NumericUpDown();
             this.numericIncidence = new System.Windows.Forms.NumericUpDown();
@@ -47,9 +48,11 @@
             this.ROSCO_TITLE = new System.Windows.Forms.Label();
             this.labelStatusStorageFolder = new System.Windows.Forms.Label();
             this.buttonStorageFolder = new System.Windows.Forms.Button();
+            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             ((System.ComponentModel.ISupportInitialize)(this.numericGSD)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericIncidence)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericAzimuth)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // buttonNewSession
@@ -275,10 +278,21 @@
             this.buttonStorageFolder.UseVisualStyleBackColor = true;
             this.buttonStorageFolder.Click += new System.EventHandler(this.buttonStorageFolder_Click);
             // 
+            // pictureBox1
+            // 
+            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
+            this.pictureBox1.Location = new System.Drawing.Point(525, 297);
+            this.pictureBox1.Name = "pictureBox1";
+            this.pictureBox1.Size = new System.Drawing.Size(300, 300);
+            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
+            this.pictureBox1.TabIndex = 19;
+            this.pictureBox1.TabStop = false;
+            // 
             // ChooseImageUI
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.labelStatusStorageFolder);
             this.Controls.Add(this.buttonStorageFolder);
             this.Controls.Add(this.ROSCO_TITLE);
@@ -306,6 +320,7 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericGSD)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericIncidence)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericAzimuth)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -332,5 +347,6 @@
         private System.Windows.Forms.Label ROSCO_TITLE;
         private System.Windows.Forms.Label labelStatusStorageFolder;
         private System.Windows.Forms.Button buttonStorageFolder;
+        private System.Windows.Forms.PictureBox pictureBox1;
     }
 }

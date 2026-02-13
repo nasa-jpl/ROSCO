@@ -271,6 +271,7 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="GdalConfiguration.vb" />
+    <Content Include="rosco.png" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">
