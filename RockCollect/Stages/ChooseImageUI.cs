@@ -17,6 +17,8 @@ namespace RockCollect.Stages
 
         private string edrIndexPath;
 
+        public const string DEF_EDR_INDEX = "EDRCUMINDEX.TAB";
+
         public ChooseImageUI(ChooseImage stage)
         {
             InitializeComponent();
@@ -27,12 +29,12 @@ namespace RockCollect.Stages
 
             labelStatusStorageFolder.Text = "Storge Folder: " + stage.GetFinalOutputDirectory(null);
 
-            string defEDRIndex = "EDRCUMINDEX.TAB";
-            if (File.Exists(defEDRIndex))
+            string defEDRIndexPath = Path.Combine(Directory.GetCurrentDirectory(), DEF_EDR_INDEX);
+            if (File.Exists(defEDRIndexPath))
             {
-                edrIndexPath = defEDRIndex;
-                labelStatusEDRIndex.Text = "EDR Index: " + defEDRIndex;
-                buttonAutoFillFromEDRIndex.Enabled = true;
+                edrIndexPath = defEDRIndexPath;
+                labelStatusEDRIndex.Text = "EDR Index: " + defEDRIndexPath;
+                buttonAutoFillFromEDRIndex.Enabled = !string.IsNullOrEmpty(Stage.GetImagePath());
             }
         }
 
@@ -49,6 +51,16 @@ namespace RockCollect.Stages
                 {
                     Stage.SetImagePath(openFileDialog.FileName);
                     labelStatusImage.Text = "Image Selected: " + openFileDialog.FileName;
+                    if (string.IsNullOrEmpty(edrIndexPath))
+                    {
+                        string path = Path.Combine(Path.GetDirectoryName(openFileDialog.FileName), DEF_EDR_INDEX);
+                        if (File.Exists(path))
+                        {
+                            edrIndexPath = path;
+                            labelStatusEDRIndex.Text = "EDR Index: " + path;
+                        }
+                    } 
+                    buttonAutoFillFromEDRIndex.Enabled = !string.IsNullOrEmpty(edrIndexPath);
                 }
             }
         }
@@ -72,7 +84,7 @@ namespace RockCollect.Stages
             using (OpenFileDialog openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.InitialDirectory = Directory.GetCurrentDirectory();
-                openFileDialog.Filter = "EDR Index (*.TAB)|All files (*.*)|*.*";
+                openFileDialog.Filter = "EDR Index (*.TAB)|*.TAB|All files (*.*)|*.*";
                 openFileDialog.FilterIndex = 1;
                 openFileDialog.RestoreDirectory = false;
 
@@ -80,7 +92,7 @@ namespace RockCollect.Stages
                 {
                     edrIndexPath = openFileDialog.FileName;
                     labelStatusEDRIndex.Text = "EDR Index: " + openFileDialog.FileName;
-                    buttonAutoFillFromEDRIndex.Enabled = true;
+                    buttonAutoFillFromEDRIndex.Enabled = !string.IsNullOrEmpty(Stage.GetImagePath());
                 }
             }
         }
@@ -162,6 +174,10 @@ namespace RockCollect.Stages
                 imageID = imageID + "_RED";
             }
 
+            Console.WriteLine(string.Format("Searching for image ID {0} in EDR index {1}...", imageID, edrIndexPath));
+
+            Cursor.Current = Cursors.WaitCursor;
+
             float gsd = float.MaxValue;
             float incidence = float.MaxValue;
             float azimuth = float.MaxValue;
@@ -177,12 +193,19 @@ namespace RockCollect.Stages
 
                 using (StreamReader reader = new StreamReader(edrIndexPath))
                 {
+                    int n = 0;
+                    int m = 0;
                     string line;
-                    while ((line = reader.ReadLine()) != null)
+                    do
                     {
-                        if (line.Contains(imageID) && line.Length >= 889)
+                        line = reader.ReadLine();
+
+                        bool spew = false;
+                        if (!string.IsNullOrEmpty(line) && line.Contains(imageID) && line.Length >= 889)
                         {
+                            spew = true;
                             foundMatch = true;
+                            ++m;
 
                             //field info from EDRCUMINDEX.LBL; START_BYTE is 1 based
                             //SCALED_PIXEL_WIDTH START_BYTE = 733 BYTES = 17
@@ -206,7 +229,26 @@ namespace RockCollect.Stages
                                 azimuth = azVal;
                             }
                         }
-                    }
+
+                        if (line != null)
+                        {
+                            ++n;
+                        }
+                        else
+                        {
+                            spew = true;
+                        }
+
+                        spew = spew || (n % 100000 == 0);
+
+                        if (spew)
+                        {
+                            Console.WriteLine(string.Format("Searching for image ID {0} in EDR index {1}, " +
+                                                            "checked {2} lines, got {3} matches",
+                                                            imageID, edrIndexPath, n, m));
+                        }
+
+                    } while (line != null);
                 }
 
                 if (!foundMatch)
@@ -224,17 +266,23 @@ namespace RockCollect.Stages
                     return;
                 }
 
+                float origAz = azimuth;
                 azimuth = 180 - azimuth;
                 if (azimuth < 0)
                 {
                     azimuth += 360;
                 }
+                Console.WriteLine(string.Format("converted azimuth from {0} to {1}", origAz, azimuth));
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Failed to parse EDR Index: " + edrIndexPath + "\n" + ex.Message,
                                 "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
             }
 
             numericGSD.Value = (decimal)gsd;
