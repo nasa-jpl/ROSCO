@@ -8,6 +8,13 @@ using System.Text.Json;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
+using NetTopologySuite.Geometries;
+using NetTopologySuite.Features;
+using NetTopologySuite.IO.Esri;
+using NetTopologySuite.IO.Esri.Dbf;
+using NetTopologySuite.IO.Esri.Dbf.Fields;
+using NetTopologySuite.IO.Esri.Shapefiles.Writers;
+
 namespace RockCollect.Stages
 {
     public class TileSelect : Stage
@@ -627,6 +634,25 @@ namespace RockCollect.Stages
             
             RockDetector.detect_per_tile_settings(ImagePath, fileName, numTiles, inSettings);
             //TODO: warn
+
+            if (!File.Exists(fileName))
+            {
+                MessageBox.Show(string.Format("Rocklist file not found \"{0}\"", fileName),
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            try
+            {
+                RockListToShapeFile(fileName);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show(string.Format("Error converting rocklist {0} to shape file: {1}",
+                                              fileName, ex.Message),
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
         }
 
         public string GetImageName()
@@ -845,22 +871,23 @@ namespace RockCollect.Stages
             string dbfFilePath = Path.ChangeExtension(shapeFilePath, ".dbf");
 
             if (!File.Exists(dbfFilePath))
-                throw new Exception(string.Format("Shape file {0} doesn't exist", dbfFilePath));
-
-            var dbf = Kaitai.Dbf.FromFile(dbfFilePath);
-            //Console.WriteLine("num fields: " + dbf.Header2.Fields.Count);
-            //Console.WriteLine("num records: " + dbf.Records.Count);
-
-            int tileXField = -1;
-            int tileYField = -1;
-            int runField = -1;
-            int visitField = -1;
-            int groupField = -1;
-
-            for (int i = 0; i < dbf.Header2.Fields.Count; i++)
             {
-                var f = dbf.Header2.Fields[i];
-                //Console.WriteLine(f.Name + " " + (char)f.Datatype);
+                throw new Exception(string.Format("Shape file {0} doesn't exist", dbfFilePath));
+            }
+
+            var dbf = new DbfReader(dbfFilePath);
+            Console.WriteLine(string.Format("Loading DBF {0} with {1} fields, {2} records",
+                                            dbfFilePath, dbf.Fields.Count, dbf.RecordCount));
+
+            bool hasTileXField = false;
+            bool hasTileYField = false;
+            bool hasRunField = false, runIsBool = false;
+            bool hasVisitField = false, visitIsBool = false;
+            bool hasGroupField = false;
+
+            foreach (var f in dbf.Fields)
+            {
+                //Console.WriteLine(string.Format("DBF {0} field {1} has type {2}", dbfFilePath, f.Name, f.FieldType));
                 //tile_num_x N
                 //tile_num_y N
                 //tl_px_col N
@@ -868,76 +895,312 @@ namespace RockCollect.Stages
                 //run C
                 //visit C
                 //group C
-                if (f.Name == "tile_num_x" && f.Datatype == 'N') tileXField = i;
-                else if (f.Name == "tile_num_y" && f.Datatype == 'N') tileYField = i;
-                else if (f.Name == "run" && f.Datatype == 'C') runField = i;
-                else if (f.Name == "visit" && f.Datatype == 'C') visitField = i;
-                else if (f.Name == "group" && f.Datatype == 'C') groupField = i;
+                if (f.Name == "tile_num_x" && f.FieldType == DbfType.Numeric)
+                {
+                    hasTileXField = true;
+                }
+                else if (f.Name == "tile_num_y" && f.FieldType == DbfType.Numeric)
+                {
+                    hasTileYField = true;
+                }
+                else if (f.Name == "run" && (f.FieldType == DbfType.Character || f.FieldType == DbfType.Logical))
+                {
+                    hasRunField = true;
+                    runIsBool = f.FieldType == DbfType.Logical;
+                }
+                else if (f.Name == "visit" && (f.FieldType == DbfType.Character || f.FieldType == DbfType.Logical))
+                {
+                    hasVisitField = true;
+                    visitIsBool = f.FieldType == DbfType.Logical;
+                }
+                else if (f.Name == "group" && f.FieldType == DbfType.Character)
+                {
+                    hasGroupField = true;
+                }
             }
-
-            if (tileXField < 0) throw new Exception("missing numeric field tile_num_x in " + dbfFilePath);
-            if (tileYField < 0) throw new Exception("missing numeric field tile_num_y in " + dbfFilePath);
-            if (runField < 0) throw new Exception("missing character field run in " + dbfFilePath);
-            if (visitField < 0) throw new Exception("missing character field visit in " + dbfFilePath);
-            if (groupField < 0) throw new Exception("missing character field group in " + dbfFilePath);
+                         
+            if (!hasTileXField) throw new Exception("missing numeric field tile_num_x in " + dbfFilePath);
+            if (!hasTileYField) throw new Exception("missing numeric field tile_num_y in " + dbfFilePath);
+            if (!hasRunField) throw new Exception("missing character field run in " + dbfFilePath);
+            if (!hasVisitField) throw new Exception("missing character field visit in " + dbfFilePath);
+            if (!hasGroupField) throw new Exception("missing character field group in " + dbfFilePath);
 
             int nt = TilesHorizontal * TilesVertical;
-            if (dbf.Records.Count != nt)
+            if (dbf.RecordCount != nt)
             {
                 throw new Exception(string.Format("expected {0} rows in {1} for {2}x{3} tiles, got {4} rows",
-                                                  nt, dbfFilePath, TilesHorizontal, TilesVertical, dbf.Records.Count));
+                                                  nt, dbfFilePath, TilesHorizontal, TilesVertical, dbf.RecordCount));
             }
 
             TileShapeData = new ShapeData[nt];
             var tilesToVisit = new HashSet<int>();
+            int tilesToRun = 0;
 
-            for (int i = 0; i < nt; i++)
+            var groups = new HashSet<string>();
+            int n = 0;
+            foreach (var r in dbf)
             {
-                var r = dbf.Records[i];
-                if (r.RecordFields.Count != dbf.Header2.Fields.Count)
+                if (r.Count != dbf.Fields.Count)
                 {
                     throw new Exception(string.Format("expected {0} fields for record {1} in {2}, got {3} fields",
-                                                      dbf.Header2.Fields.Count, i, dbfFilePath, r.RecordFields.Count));
+                                                      dbf.Fields.Count, n, dbfFilePath, r.Count));
                 }
                 try
                 {
-                    int x = DbfParseInt(r.RecordFields[tileXField], "tile_num_x", tileXField);
-                    int y = DbfParseInt(r.RecordFields[tileYField], "tile_num_y", tileYField);
-                    bool v = DbfParseBool(r.RecordFields[visitField], "visit", visitField);
-                    bool u = DbfParseBool(r.RecordFields[runField], "run", runField);
-                    string g = DbfParseString(r.RecordFields[groupField]);
+                    int x = Convert.ToInt32(r["tile_num_x"]);
+                    int y = Convert.ToInt32(r["tile_num_y"]);
+                    bool v = DbfParseBool(r, "visit", visitIsBool);
+                    bool u = DbfParseBool(r, "run", runIsBool);
+                    string g = (string)(r["group"]);
                     int idx = GetTileIndex(x, y);
                     TileShapeData[idx] = new ShapeData { tileX = x, tileY = y, visit = v, run = u, grp = g };
-                    if (v) tilesToVisit.Add(i);
+                    if (v) tilesToVisit.Add(idx);
+                    if (u) tilesToRun++;
+                    groups.Add(g);
                 } catch (Exception ex) {
                     System.Windows.Forms.MessageBox.Show(
-                        string.Format("Error parsing record {0} in {1}: {2}.", i, dbfFilePath, ex.Message),
+                        string.Format("Error parsing record {0} in {1}: {2}.", n, dbfFilePath, ex.Message),
                         "Shape File Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
+                n++;
             }
+
+            Console.WriteLine(string.Format("Loaded DBF file {0} with {1} tiles: " +
+                                            "{2} groups, {3} tiles to visit, {4} tiles to run",
+                                            dbfFilePath, n, groups.Count, tilesToVisit.Count, tilesToRun));
 
             remainingTilesToTune = remainingTilesToTune.Where(tile => tilesToVisit.Contains(tile)).ToList();
         }
         
-        string DbfParseString(byte[] data)
+        bool DbfParseBool(IAttributesTable record, string fieldName, bool isLogical)
         {
-            return System.Text.Encoding.UTF8.GetString(data, 0, data.Length).Trim();
+            if (isLogical) return (bool)(record[fieldName]);
+            string str = (string)(record[fieldName]);
+            if (bool.TryParse(str, out bool b)) return b;
+            throw new Exception(string.Format("error parsing \"{0}\" as boolean in field {1}", str, fieldName));
         }
         
-        bool DbfParseBool(byte[] data, string fieldName, int fieldNum)
+        void RockListToShapeFile(string path)
         {
-            string str = DbfParseString(data);
-            if (bool.TryParse(str, out bool result)) return result;
-            throw new Exception(string.Format("error parsing \"{0}\" as bool in field {1} \"{2}\"",
-                                              str, fieldNum, fieldName));
-        }
-        
-        int DbfParseInt(byte[] data, string fieldName, int fieldNum)
-        {
-            string str = DbfParseString(data);
-            if (int.TryParse(str, out int result)) return result;
-            throw new Exception(string.Format("error parsing \"{0}\" as int in field {1} \"{2}\"",
-                                              str, fieldNum, fieldName));
+            string shpPath = Path.ChangeExtension(path, ".shp");
+
+            Console.WriteLine(string.Format("Converting rock list {0} to shape file {1}", path, shpPath));
+
+            if (File.Exists(shpPath))
+            {
+                var result = MessageBox.Show(
+                    string.Format("Shape file {0} already exists. Do you want to overwrite it?", shpPath),
+                    "Overwrite Existing File", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+
+                if (result == DialogResult.No)
+                {
+                    throw new Exception(string.Format("Not overwriting existing {0}", shpPath));
+                }
+
+                File.Delete(shpPath);
+
+                string shxPath = Path.ChangeExtension(path, ".shx");
+                if (File.Exists(shxPath))
+                {
+                    File.Delete(shxPath);
+                }
+
+                string dbfPath = Path.ChangeExtension(path, ".dbf");
+                if (File.Exists(dbfPath))
+                {
+                    File.Delete(dbfPath);
+                }
+            }
+
+            const string expectedColumns = "id, tileR, tileC, shaX, shaY, rockX, rockY, tileShaX, tileShaY, shaArea, shaLen, rockWidth, rockHeight, score, gradMean, Compact, Exent, Class, gamma";
+
+            var rocks = new List<RockDetector.OUTROCK>();
+            bool foundColumnHeader = false;
+            bool foundGsd = false;
+            float gsd = 0.0f;
+            int lineNumber = 0;
+
+            foreach (string line in File.ReadLines(path))
+            {
+                lineNumber++;
+
+                if (string.IsNullOrWhiteSpace(line)) continue;
+
+                if (!foundColumnHeader && line.TrimStart().StartsWith("version"))
+                {
+                    continue;
+                }
+
+                if (!foundColumnHeader && line.TrimStart().StartsWith("%"))
+                {
+                    if (!foundGsd && line.Contains("GSD_resolution"))
+                    {
+                        string[] parts = line.Split(new char[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries);
+                        if (parts.Length < 2)
+                        {
+                            throw new Exception(string.Format(
+                                "Invalid GSD_resolution format at line {0}: expected whitespace followed by a number",
+                                lineNumber));
+                        }
+
+                        string valueStr = parts[parts.Length - 1];
+                        if (!float.TryParse(valueStr, out gsd))
+                        {
+                            throw new Exception(string.Format("Failed to parse GSD_resolution at line {0}: \"{1}\"",
+                                                              lineNumber, valueStr));
+                        }
+
+                        foundGsd = true;
+                    }
+                    continue;
+                }
+
+                if (!foundColumnHeader)
+                {
+                    if (line != expectedColumns)
+                    {
+                        throw new Exception(string.Format("Column names mismatch at line {0}.\nExpected: {1}\nGot: {2}",
+                                                          lineNumber, expectedColumns, line));
+                    }
+
+                    if (!foundGsd)
+                    {
+                        throw new Exception("GSD_resolution header not found in file");
+                    }
+
+                    foundColumnHeader = true;
+                    continue;
+                }
+
+                string[] values = line.Split(',');
+                if (values.Length != 19)
+                {
+                    throw new Exception(string.Format("Expected 19 values at line {0}, got {1}",
+                                                      lineNumber, values.Length));
+                }
+
+                try
+                {
+                    var rock = new RockDetector.OUTROCK
+                    {
+                        id = int.Parse(values[0].Trim()),
+                        tileR = int.Parse(values[1].Trim()),
+                        tileC = int.Parse(values[2].Trim()),
+                        shaX = float.Parse(values[3].Trim()),
+                        shaY = float.Parse(values[4].Trim()),
+                        rockX = float.Parse(values[5].Trim()),
+                        rockY = float.Parse(values[6].Trim()),
+                        tileShaX = float.Parse(values[7].Trim()),
+                        tileShaY = float.Parse(values[8].Trim()),
+                        shaArea = int.Parse(values[9].Trim()),
+                        shaLen = float.Parse(values[10].Trim()),
+                        rockWidth = float.Parse(values[11].Trim()),
+                        rockHeight = float.Parse(values[12].Trim()),
+                        score = float.Parse(values[13].Trim()),
+                        gradMean = float.Parse(values[14].Trim()),
+                        compact = float.Parse(values[15].Trim()),
+                        extent = float.Parse(values[16].Trim()),
+                        Class = int.Parse(values[17].Trim()),
+                        gamma = float.Parse(values[18].Trim())
+                    };
+                    rocks.Add(rock);
+                }
+                catch (Exception ex)
+                {
+                    throw new Exception(string.Format("Error parsing line {0}: {1}", lineNumber, ex.Message));
+                }
+            }
+
+            Console.WriteLine(string.Format("Loaded rock list {0} with {1} rocks, gsd={2}", path, rocks.Count(), gsd));
+
+            if (!foundColumnHeader)
+            {
+                throw new Exception("No column header found in file");
+            }
+
+            if (rocks.Count() == 0)
+            {
+                throw new Exception("Empty rocklist");
+            }
+
+            //now write an ESRI shape file containing all the rocks and their metadata
+            //the specifics here mimic the functionality of original matlab script rocklist2shapefileNOMAP.m
+            //by Marshall Trautman
+            //the original script is attached to https://github.com/nasa-jpl/ROSCO/issues/7
+
+            var fields = new List<DbfField>();
+            var idField = fields.AddNumericInt32Field("id");
+            var tileRField = fields.AddNumericInt32Field("tileR");
+            var tileCField = fields.AddNumericInt32Field("tileC");
+            var shaXField = fields.AddFloatField("shaX");
+            var shaYField = fields.AddFloatField("shaY");
+            var rockXField = fields.AddFloatField("rockX");
+            var rockYField = fields.AddFloatField("rockY");
+            var tileShaXField = fields.AddFloatField("tileShaX");
+            var tileShaYField = fields.AddFloatField("tileShaY");
+            var shaAreaField = fields.AddNumericInt32Field("shaArea");
+            var shaLenField = fields.AddFloatField("shaLen");
+            var rockWidthField = fields.AddFloatField("rockWidth");
+            var rockHeightField = fields.AddFloatField("rockHeight");
+            var scoreField = fields.AddFloatField("score");
+            var gradMeanField = fields.AddFloatField("gradMean");
+            var compactField = fields.AddFloatField("compact");
+            var extentField = fields.AddFloatField("extent");
+            var classField = fields.AddNumericInt32Field("Class");
+            var gammaField = fields.AddFloatField("gamma");
+            var diamMField = fields.AddFloatField("diamM");
+            var radiusField = fields.AddFloatField("radius");
+            var radiusMField = fields.AddFloatField("radiusM");
+
+            Console.WriteLine(string.Format("Saving shape file {0}...", shpPath));
+
+            var options = new ShapefileWriterOptions(ShapeType.Polygon, fields.ToArray());
+            using (var writer = Shapefile.OpenWrite(shpPath, options))
+            {
+                foreach (RockDetector.OUTROCK rock in rocks)
+                {
+                    const int numSides = 18;
+                    var coords = new Coordinate[numSides + 1];
+                    double radius = rock.rockWidth / 2.0;
+                    for (int i = 0; i <= numSides; i++)
+                    {
+                        //the negative y coordinate here replicates the functionality of original matlab code
+                        //in readrockList.m by Marshall Trautman
+                        double angle = i < numSides ? (2.0 * Math.PI * i / numSides) : 0;
+                        double x = rock.rockX + radius * Math.Cos(angle);
+                        double y = -rock.rockY + radius * Math.Sin(angle);
+                        coords[i] = new Coordinate(x, y);
+                    }
+                    writer.Geometry = new Polygon(new LinearRing(coords));
+
+                    idField.NumericValue = rock.id;
+                    tileRField.NumericValue = rock.tileR;
+                    tileCField.NumericValue = rock.tileC;
+                    shaXField.NumericValue = rock.shaX;
+                    shaYField.NumericValue = rock.shaY;
+                    rockXField.NumericValue = rock.rockX;
+                    rockYField.NumericValue = rock.rockY;
+                    tileShaXField.NumericValue = rock.tileShaX;
+                    tileShaYField.NumericValue = rock.tileShaY;
+                    shaAreaField.NumericValue = rock.shaArea;
+                    shaLenField.NumericValue = rock.shaLen;
+                    rockWidthField.NumericValue = rock.rockWidth;
+                    rockHeightField.NumericValue = rock.rockHeight;
+                    scoreField.NumericValue = rock.score;
+                    gradMeanField.NumericValue = rock.gradMean;
+                    compactField.NumericValue = rock.compact;
+                    extentField.NumericValue = rock.extent;
+                    classField.NumericValue = rock.Class;
+                    gammaField.NumericValue = rock.gamma;
+                    diamMField.NumericValue = gsd * rock.rockWidth;
+                    radiusField.NumericValue = rock.rockWidth / 2;
+                    radiusMField.NumericValue = gsd * rock.rockWidth / 2;
+
+                    writer.Write();
+                }
+            }
+
+            Console.WriteLine(string.Format("Saved {0} rocks to shape file {1}", rocks.Count(), shpPath));
         }
     }
 }

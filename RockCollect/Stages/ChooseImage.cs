@@ -32,9 +32,14 @@ namespace RockCollect.Stages
             return GetFinalOutputDirectory(outData.Data.ContainsKey("IMAGE_PATH") ? outData.Data["IMAGE_PATH"] : null);
         }
 
-        public void SetNewImage(string path)
+        public void SetImagePath(string path)
         {
             ImagePath = path;
+        }
+
+        public string GetImagePath()
+        {
+            return ImagePath;
         }
 
         public override bool SaveOutput()
@@ -72,9 +77,14 @@ namespace RockCollect.Stages
             SolarIncidenceDegrees = solarIncidenceDegrees;
         }
 
-        internal void SetComparisonRocklist(string rocklistPath)
+        public void SetComparisonRocklist(string rocklistPath)
         {
             ComparisonRocklistPath = rocklistPath;
+        }
+
+        public string GetComparisonRocklist()
+        {
+            return ComparisonRocklistPath;
         }
 
         public void SetShapeFile(string path)
