@@ -1166,7 +1166,7 @@ namespace RockCollect.Stages
                     {
                         //the negative y coordinate here replicates the functionality of original matlab code
                         //in readrockList.m by Marshall Trautman
-                        double angle = 2.0 * Math.PI * i / numSides;
+                        double angle = i < numSides ? (2.0 * Math.PI * i / numSides) : 0;
                         double x = rock.rockX + radius * Math.Cos(angle);
                         double y = -rock.rockY + radius * Math.Sin(angle);
                         coords[i] = new Coordinate(x, y);
