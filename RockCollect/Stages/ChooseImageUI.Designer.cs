@@ -28,7 +28,6 @@
         /// </summary>
         private void InitializeComponent()
         {
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ChooseImageUI));
             this.buttonNewSession = new System.Windows.Forms.Button();
             this.numericGSD = new System.Windows.Forms.NumericUpDown();
             this.numericIncidence = new System.Windows.Forms.NumericUpDown();
@@ -48,7 +47,6 @@
             this.ROSCO_TITLE = new System.Windows.Forms.Label();
             this.labelStatusStorageFolder = new System.Windows.Forms.Label();
             this.buttonStorageFolder = new System.Windows.Forms.Button();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.labelStatusEDRIndex = new System.Windows.Forms.Label();
             this.buttonEDRIndex = new System.Windows.Forms.Button();
             this.buttonAutoFillFromEDRIndex = new System.Windows.Forms.Button();
@@ -57,7 +55,6 @@
             ((System.ComponentModel.ISupportInitialize)(this.numericGSD)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericIncidence)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericAzimuth)).BeginInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.panelStatusLabels.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -259,7 +256,7 @@
             this.ROSCO_TITLE.Name = "ROSCO_TITLE";
             this.ROSCO_TITLE.Size = new System.Drawing.Size(800, 60);
             this.ROSCO_TITLE.TabIndex = 16;
-            this.ROSCO_TITLE.Text = "ROck Shadow COunter (ROSCO) RockCollect User Interface\r\nVersion 20260214";
+            this.ROSCO_TITLE.Text = "ROck Shadow COunter (ROSCO) RockCollect User Interface\r\nVersion 20260311";
             this.ROSCO_TITLE.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             this.ROSCO_TITLE.Click += new System.EventHandler(this.ROSCO_TITLE_Click);
             // 
@@ -283,16 +280,6 @@
             this.buttonStorageFolder.Text = "Select Storage Folder";
             this.buttonStorageFolder.UseVisualStyleBackColor = true;
             this.buttonStorageFolder.Click += new System.EventHandler(this.buttonStorageFolder_Click);
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(610, 363);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(225, 225);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.StretchImage;
-            this.pictureBox1.TabIndex = 19;
-            this.pictureBox1.TabStop = false;
             // 
             // labelStatusEDRIndex
             // 
@@ -360,7 +347,6 @@
             this.Controls.Add(this.buttonAutoFillFromComparisonRocklist);
             this.Controls.Add(this.buttonAutoFillFromEDRIndex);
             this.Controls.Add(this.buttonEDRIndex);
-            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.buttonStorageFolder);
             this.Controls.Add(this.ROSCO_TITLE);
             this.Controls.Add(this.buttonShapeFile);
@@ -377,14 +363,13 @@
             this.Controls.Add(this.numericGSD);
             this.Controls.Add(this.buttonNewSession);
             this.Margin = new System.Windows.Forms.Padding(2);
-            this.MinimumSize = new System.Drawing.Size(850, 600);
+            this.MinimumSize = new System.Drawing.Size(850, 500);
             this.Name = "ChooseImageUI";
-            this.Size = new System.Drawing.Size(850, 600);
+            this.Size = new System.Drawing.Size(850, 500);
             this.Load += new System.EventHandler(this.ChooseImageUI_Load);
             ((System.ComponentModel.ISupportInitialize)(this.numericGSD)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericIncidence)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.numericAzimuth)).EndInit();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.panelStatusLabels.ResumeLayout(false);
             this.panelStatusLabels.PerformLayout();
             this.ResumeLayout(false);
@@ -413,7 +398,6 @@
         private System.Windows.Forms.Label ROSCO_TITLE;
         private System.Windows.Forms.Label labelStatusStorageFolder;
         private System.Windows.Forms.Button buttonStorageFolder;
-        private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.Label labelStatusEDRIndex;
         private System.Windows.Forms.Button buttonEDRIndex;
         private System.Windows.Forms.Button buttonAutoFillFromEDRIndex;

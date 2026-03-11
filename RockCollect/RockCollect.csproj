@@ -15,6 +15,7 @@
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
     <IsWebBootstrapper>false</IsWebBootstrapper>
+    <ApplicationIcon>rosco.ico</ApplicationIcon>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Disk</InstallFrom>
@@ -271,7 +272,9 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="GdalConfiguration.vb" />
-    <Content Include="rosco.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="rosco.ico" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include=".NETFramework,Version=v4.7.2">

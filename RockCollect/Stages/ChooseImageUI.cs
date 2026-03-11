@@ -144,6 +144,9 @@ namespace RockCollect.Stages
                 numericGSD.Value = (decimal)rocklist.paramList.GSD_resolution;
                 numericIncidence.Value = (decimal)rocklist.paramList.sun_incidence_angle;
                 numericAzimuth.Value = (decimal)rocklist.paramList.sun_azimuth_angle;
+                Stage.SetGroundSamplingDistance(rocklist.paramList.GSD_resolution);
+                Stage.SetSolarIncidence(rocklist.paramList.sun_incidence_angle);
+                Stage.SetSubSolarAzimuth(rocklist.paramList.sun_azimuth_angle);
             }
             catch
             {
@@ -288,6 +291,10 @@ namespace RockCollect.Stages
             numericGSD.Value = (decimal)gsd;
             numericIncidence.Value = (decimal)incidence;
             numericAzimuth.Value = (decimal)azimuth;
+
+            Stage.SetGroundSamplingDistance(gsd);
+            Stage.SetSolarIncidence(incidence);
+            Stage.SetSubSolarAzimuth(azimuth);
         }
 
         private void buttonShapeFile_Click(object sender, EventArgs e)

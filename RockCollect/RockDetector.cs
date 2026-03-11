@@ -16,7 +16,7 @@ namespace RockCollect
         static public readonly float SHADOW_SPLIT_RATIO = 0.5f;
         public const int TILESIZE = 550;
 
-        static public readonly float MIN_VALID_GSD = 0;
+        static public readonly float MIN_VALID_GSD = 0.001f;
         static public readonly float MAX_VALID_GSD = 100;
 
         static public readonly float MIN_VALID_AZIMUTH = 0;
