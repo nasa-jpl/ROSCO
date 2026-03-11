@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -93,13 +94,13 @@ namespace RockCollect
                 {
                     Regex tileRegex = new Regex(@"^Tile_\d+_\d+.json$");
 
-                    int numExisting = Directory.GetFiles(FinalOutputDirectory)
+                    List<string> existing = Directory.GetFiles(FinalOutputDirectory)
                         .Where(path => tileRegex.IsMatch(Path.GetFileName(path)))
-                        .Count();
+                        .ToList();
 
-                    Console.WriteLine("found {0} existing tile settings", numExisting);
+                    Console.WriteLine("found {0} existing tile settings", existing.Count);
 
-                    if (numExisting > 0)
+                    if (existing.Count > 0)
                     {
                         string savePath = null;
                         for (int i = 0; savePath == null; i++)
@@ -108,12 +109,63 @@ namespace RockCollect
                             if (Directory.Exists(savePath) || File.Exists(savePath)) savePath = null;
                         }
 
-                        DialogResult result =
-                            MessageBox.Show(string.Format("Use {0} existing tile settings at {1}?  " +
-                                                          "If not they will be moved to {2}.",
-                                                          numExisting, FinalOutputDirectory, savePath),
-                                            "Use Existing Tiles", MessageBoxButtons.YesNo, MessageBoxIcon.Question); 
-                        if (result == DialogResult.No)
+                        //verify that all existing GSD, AZIMUTH, and INCIDENCE equal the values set in ChooseImage
+                        //TileSelect.cs will separately check for invalid or partial tile settings
+                        var ci = activeStage as RockCollect.Stages.ChooseImage;
+                        float gsd = ci.GetGroundSamplingDistance();
+                        float azimuth = ci.GetSubSolarAzimuth();
+                        float incidence = ci.GetSolarIncidence();
+                        string msg = null;
+                        foreach (string file in existing)
+                        {
+                            try
+                            {
+                                var data = JsonSerializer.Deserialize<StageData>(File.ReadAllText(file));
+                                string reason = CheckFloat(data.Data, "GSD", gsd);
+                                if (reason == null)
+                                {
+                                    reason = CheckFloat(data.Data, "AZIMUTH", azimuth);
+                                }
+                                if (reason == null)
+                                {
+                                    reason = CheckFloat(data.Data, "INCIDENCE", incidence);
+                                }
+                                if (reason != null)
+                                {
+                                    msg = string.Format("{0} in {1}", reason, file);
+                                    break;
+                                }
+                            }
+                            catch (Exception ex)
+                            {
+                                msg = string.Format("error parsing JSON {0}: {1}", file, ex.Message);
+                                break;
+                            }
+                        }
+
+                        bool move = false;
+                        if (msg != null)
+                        {
+                            MessageBox.Show(
+                                string.Format("Existing tile settings at {0} contain invalid settings: {1}.  " +
+                                              "Moving them to {2}.", FinalOutputDirectory, msg, savePath),
+                                "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                            move = true;
+                        }
+                        else
+                        {
+                            DialogResult result =
+                                MessageBox.Show(string.Format("Use {0} existing tile settings at {1}?  " +
+                                                              "If not they will be moved to {2}.",
+                                                              existing.Count, FinalOutputDirectory, savePath),
+                                                "Use Existing Tiles", MessageBoxButtons.YesNo, MessageBoxIcon.Question); 
+                            if (result == DialogResult.No)
+                            {
+                                move = true;
+                            }
+                        }
+                            
+                        if (move)
                         {
                             Directory.Move(FinalOutputDirectory, savePath);
                             Directory.CreateDirectory(FinalOutputDirectory);
@@ -170,6 +222,19 @@ namespace RockCollect
 
                 nextStage.Activate(WorkArea, StatusForm, false);
             }
+        }
+
+        private static string CheckFloat(Dictionary<string, string> strings, string key, float expected)
+        {
+            if (!strings.ContainsKey(key)) return $"{key} not present";
+            
+            float v;
+            try { v = float.Parse(strings[key]); }
+            catch (FormatException) { return $"value \"{strings[key]}\" for {key} not a valid float"; }
+            
+            if (v == expected) return null;
+
+            return $"expected {expected} for {key}, got {v}";
         }
     }
 }

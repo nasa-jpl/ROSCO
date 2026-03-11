@@ -1111,6 +1111,12 @@ namespace RockCollect.Stages
                 }
             }
 
+            if (gsd < RockDetector.MIN_VALID_GSD || gsd > RockDetector.MAX_VALID_GSD)
+            {
+                throw new Exception(string.Format("Invalid ground sampling distance {0} not in range {1} to {2}",
+                                                  gsd, RockDetector.MIN_VALID_GSD, RockDetector.MAX_VALID_GSD));
+            }
+
             Console.WriteLine(string.Format("Loaded rock list {0} with {1} rocks, gsd={2}", path, rocks.Count(), gsd));
 
             if (!foundColumnHeader)
