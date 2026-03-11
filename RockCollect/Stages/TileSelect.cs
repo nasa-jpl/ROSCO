@@ -1144,13 +1144,13 @@ namespace RockCollect.Stages
             var rockHeightField = fields.AddFloatField("rockHeight");
             var scoreField = fields.AddFloatField("score");
             var gradMeanField = fields.AddFloatField("gradMean");
-            var compactField = fields.AddFloatField("compact");
-            var extentField = fields.AddFloatField("extent");
+            var compactField = fields.AddFloatField("Compact");
+            var extentField = fields.AddFloatField("Extent");
             var classField = fields.AddNumericInt32Field("Class");
             var gammaField = fields.AddFloatField("gamma");
-            var diamMField = fields.AddFloatField("diamM");
-            var radiusField = fields.AddFloatField("radius");
-            var radiusMField = fields.AddFloatField("radiusM");
+            var diamMField = fields.AddFloatField("DiamM");
+            var radiusField = fields.AddFloatField("Radius");
+            var radiusMField = fields.AddFloatField("RadiusM");
 
             Console.WriteLine(string.Format("Saving shape file {0}...", shpPath));
 
