@@ -256,7 +256,7 @@
             this.ROSCO_TITLE.Name = "ROSCO_TITLE";
             this.ROSCO_TITLE.Size = new System.Drawing.Size(800, 60);
             this.ROSCO_TITLE.TabIndex = 16;
-            this.ROSCO_TITLE.Text = "ROck Shadow COunter (ROSCO) RockCollect User Interface\r\nVersion 20260311";
+            this.ROSCO_TITLE.Text = "ROck Shadow COunter (ROSCO) RockCollect User Interface\r\nVersion 20260314";
             this.ROSCO_TITLE.TextAlign = System.Drawing.ContentAlignment.TopCenter;
             this.ROSCO_TITLE.Click += new System.EventHandler(this.ROSCO_TITLE_Click);
             // 
