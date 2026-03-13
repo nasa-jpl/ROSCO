@@ -232,7 +232,7 @@ namespace RockCollect
             try { v = float.Parse(strings[key]); }
             catch (FormatException) { return $"value \"{strings[key]}\" for {key} not a valid float"; }
             
-            if (v == expected) return null;
+            if (Math.Abs(v - expected) < 0.0001) return null;
 
             return $"expected {expected} for {key}, got {v}";
         }
