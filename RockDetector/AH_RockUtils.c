@@ -36,21 +36,29 @@ float RoundToNearestTieToEven(float in, int precisionDigits)
 
 const double ROCKLIST_FILE_VERSION = 2.0;
 
-int write_rocklist_header(FILE* fp_out, RD_PARMS* rd_parms)
-{
+static void write_header_float(FILE* fp_out, const char* name, float val, const char* negative) {
+    if (val >=0) fprintf(fp_out, "%%%s %f\n", name, val);
+    else fprintf(fp_out, "%%%s %s\n", name, negative);
+}
 
+static void write_header_int(FILE* fp_out, const char* name, int val, const char* negative) {
+    if (val >=0 || negative == NULL) fprintf(fp_out, "%%%s %d\n", name, val);
+    else fprintf(fp_out, "%%%s %s\n", name, negative);
+}
+int write_rocklist_header(FILE* fp_out, RD_PARMS* rd_parms, const char* negative)
+{
     fprintf(fp_out, "version %f\n", ROCKLIST_FILE_VERSION);
-    fprintf(fp_out, "%%GSD_resolution %f\n", rd_parms->ground_resolution);
-    fprintf(fp_out, "%%gamma %f\n", rd_parms->gamma);
-    fprintf(fp_out, "%%sun_azimuth_angle %f\n", rd_parms->sun_azimuth_angle);
-    fprintf(fp_out, "%%sun_incidence_angle %f\n", rd_parms->sun_incidence_angle);
-    fprintf(fp_out, "%%min_shadow_size %f\n", rd_parms->min_shadow_size);
-    fprintf(fp_out, "%%max_shadow_size %f\n", rd_parms->max_shadow_size);
-    fprintf(fp_out, "%%confidence_threshold %f\n", rd_parms->confidence_threshold);
-    fprintf(fp_out, "%%min_split_shadow_size  %f\n", rd_parms->min_shadow_size_split);
-    fprintf(fp_out, "%%mean_gradient  %f\n", rd_parms->mean_gradient_threshold);
-    fprintf(fp_out, "%%shadow excentricity %f\n", rd_parms->rock_elongate_ratio);
-    fprintf(fp_out, "%%gamma_threshold_override %d\n", rd_parms->gamma_threshold_override);
+    write_header_float(fp_out, "GSD_resolution",         rd_parms->ground_resolution,        negative);
+    write_header_float(fp_out, "gamma",                  rd_parms->gamma,                    negative);
+    write_header_float(fp_out, "sun_azimuth_angle",      rd_parms->sun_azimuth_angle,        negative);
+    write_header_float(fp_out, "sun_incidence_angle",    rd_parms->sun_incidence_angle,      negative);
+    write_header_float(fp_out, "min_shadow_size",        rd_parms->min_shadow_size,          negative);
+    write_header_float(fp_out, "max_shadow_size",        rd_parms->max_shadow_size,          negative);
+    write_header_float(fp_out, "confidence_threshold",   rd_parms->confidence_threshold,     negative);
+    write_header_float(fp_out, "min_split_shadow_size",  rd_parms->min_shadow_size_split,    negative);
+    write_header_float(fp_out, "mean_gradient",          rd_parms->mean_gradient_threshold,  negative);
+    write_header_float(fp_out, "shadow_eccentricity",    rd_parms->rock_elongate_ratio,      negative);
+    write_header_int(fp_out, "gamma_threshold_override", rd_parms->gamma_threshold_override, negative);
     fprintf(fp_out, "id, tileR, tileC, shaX, shaY, rockX, rockY, tileShaX, tileShaY, shaArea, shaLen, rockWidth, rockHeight, score, gradMean, Compact, Exent, Class, gamma\n");
     fflush(stdout);
 
@@ -84,13 +92,13 @@ int read_rocklist_header_v1(FILE* fp_in, RD_PARMS* rd_parms)
     read = fscanf(fp_in, "%%confidence_threshold %f\n", &rd_parms->confidence_threshold);
     if (read != 1) { printf("error reading file. quitting. \n"); fclose(fp_in); return FALSE; }
 
-    read = fscanf(fp_in, "%%min_split_shadow_size  %f\n", &rd_parms->min_shadow_size_split);
+    read = fscanf(fp_in, "%%min_split_shadow_size %f\n", &rd_parms->min_shadow_size_split);
     if (read != 1) { printf("error reading file. quitting. \n"); fclose(fp_in); return FALSE; }
 
-    read = fscanf(fp_in, "%%mean_gradient  %f\n", &rd_parms->mean_gradient_threshold);
+    read = fscanf(fp_in, "%%mean_gradient %f\n", &rd_parms->mean_gradient_threshold);
     if (read != 1) { printf("error reading file. quitting. \n"); fclose(fp_in); return FALSE; }
 
-    read = fscanf(fp_in, "%%shadow excentricity %f\n", &rd_parms->rock_elongate_ratio);
+    read = fscanf(fp_in, "%%shadow_eccentricity %f\n", &rd_parms->rock_elongate_ratio);
     if (read != 1) { printf("error reading file. quitting. \n"); fclose(fp_in); return FALSE; }
 
     read = fscanf(fp_in, "%%gamma_threshold_override %d\n", &rd_parms->gamma_threshold_override);
@@ -150,13 +158,13 @@ int read_rocklist_header(FILE* fp_in, RD_PARMS* rd_parms)
     read = fscanf(fp_in, "%%confidence_threshold %f\n", &rd_parms->confidence_threshold);
     if (read != 1) { printf("error reading file. quitting. \n"); fclose(fp_in); return FALSE; }
 
-    read = fscanf(fp_in, "%%min_split_shadow_size  %f\n", &rd_parms->min_shadow_size_split);
+    read = fscanf(fp_in, "%%min_split_shadow_size %f\n", &rd_parms->min_shadow_size_split);
     if (read != 1) { printf("error reading file. quitting. \n"); fclose(fp_in); return FALSE; }
 
-    read = fscanf(fp_in, "%%mean_gradient  %f\n", &rd_parms->mean_gradient_threshold);
+    read = fscanf(fp_in, "%%mean_gradient %f\n", &rd_parms->mean_gradient_threshold);
     if (read != 1) { printf("error reading file. quitting. \n"); fclose(fp_in); return FALSE; }
 
-    read = fscanf(fp_in, "%%shadow excentricity %f\n", &rd_parms->rock_elongate_ratio);
+    read = fscanf(fp_in, "%%shadow_eccentricity %f\n", &rd_parms->rock_elongate_ratio);
     if (read != 1) { printf("error reading file. quitting. \n"); fclose(fp_in); return FALSE; }
 
     read = fscanf(fp_in, "%%gamma_threshold_override %d\n", &rd_parms->gamma_threshold_override);
@@ -563,50 +571,52 @@ int detect_per_tile_settings(char* inputImagePath, char* outputRockListPath, int
     }
 
     RD_PARMS params;
-    params.gamma = 0.0f;
-    params.sun_incidence_angle = 0.0f;
-    params.sun_azimuth_angle = 0.0f;
-    params.min_shadow_size = 0.0f;
-    params.ground_resolution = 0.0f;
-    params.confidence_threshold = 0.0f;
-    params.min_shadow_size_split = 0.0f;
-    params.spliting_ratio = 0.0f;
-    params.rock_elongate_ratio = 0.0f;
-    params.mean_gradient_threshold = 0.0f;
-    params.max_shadow_size = 0.0f;
-    params.gamma_threshold_override = 0;
+    params.gamma = -1.0f;
+    params.sun_incidence_angle = -1.0f;
+    params.sun_azimuth_angle = -1.0f;
+    params.min_shadow_size = -1.0f;
+    params.ground_resolution = -1.0f;
+    params.confidence_threshold = -1.0f;
+    params.min_shadow_size_split = -1.0f;
+    params.spliting_ratio = -1.0f;
+    params.rock_elongate_ratio = -1.0f;
+    params.mean_gradient_threshold = -1.0f;
+    params.max_shadow_size = -1.0f;
+    params.gamma_threshold_override = -1;
 
     if (numSettings > 0) {
-        RD_PARMS* first = NULL;
-        int all_same = 1;
-        for (int i = 0; i < numSettings; i++) {
+        RD_PARMS* first = &settingsArray[0];
+        params.gamma =                    first->gamma; 
+        params.sun_incidence_angle =      first->sun_incidence_angle;
+        params.sun_azimuth_angle =        first->sun_azimuth_angle;
+        params.min_shadow_size =          first->min_shadow_size;
+        params.ground_resolution =        first->ground_resolution;
+        params.confidence_threshold =     first->confidence_threshold;
+        params.min_shadow_size_split =    first->min_shadow_size_split;
+        params.spliting_ratio =           first->spliting_ratio;
+        params.rock_elongate_ratio =      first->rock_elongate_ratio;
+        params.mean_gradient_threshold =  first->mean_gradient_threshold;
+        params.max_shadow_size =          first->max_shadow_size;
+        params.gamma_threshold_override = first->gamma_threshold_override;
+
+        for (int i = 1; i < numSettings; i++) {
             RD_PARMS* p = &settingsArray[i];
-            if (p->max_shadow_size <= 0) continue;
-            if (first == NULL) first = p;
-            else if (p->gamma != first->gamma ||
-                p->sun_incidence_angle != first->sun_incidence_angle ||
-                p->sun_azimuth_angle != first->sun_azimuth_angle ||
-                p->min_shadow_size != first->min_shadow_size ||
-                p->ground_resolution != first->ground_resolution ||
-                p->confidence_threshold != first->confidence_threshold ||
-                p->min_shadow_size_split != first->min_shadow_size_split ||
-                p->spliting_ratio != first->spliting_ratio ||
-                p->rock_elongate_ratio != first->rock_elongate_ratio ||
-                p->mean_gradient_threshold != first->mean_gradient_threshold ||
-                p->max_shadow_size != first->max_shadow_size ||
-                p->gamma_threshold_override != first->gamma_threshold_override) {
-                // this tile has different settings per tile, can't write a meaningful header
-                all_same = 0;
-                break;
-            }
-        }
-        if (all_same && first != NULL) {
-            printf("All tiles have same settings.\n");
-            params = *first;
+            if (p->gamma                    != params.gamma)                    params.gamma = -1; //different per tile
+            if (p->sun_incidence_angle      != params.sun_incidence_angle)      params.sun_incidence_angle = -1;
+            if (p->sun_azimuth_angle        != params.sun_azimuth_angle)        params.sun_azimuth_angle = -1;
+            if (p->min_shadow_size          != params.min_shadow_size)          params.min_shadow_size = -1;
+            if (p->ground_resolution        != params.ground_resolution)        params.ground_resolution = -1;
+            if (p->confidence_threshold     != params.confidence_threshold)     params.confidence_threshold = -1;
+            if (p->min_shadow_size_split    != params.min_shadow_size_split)    params.min_shadow_size_split = -1;
+            if (p->spliting_ratio           != params.spliting_ratio)           params.spliting_ratio = -1;
+            if (p->rock_elongate_ratio      != params.rock_elongate_ratio)      params.rock_elongate_ratio = -1;
+            if (p->mean_gradient_threshold  != params.mean_gradient_threshold)  params.mean_gradient_threshold = -1;
+            if (p->max_shadow_size          != params.max_shadow_size)          params.max_shadow_size = -1;
+            if (p->gamma_threshold_override != params.gamma_threshold_override) params.gamma_threshold_override = -1;
         }
     }
 
-    write_rocklist_header(fp_out, &params);
+    write_rocklist_header(fp_out, &params, "varies");
 
     //intialize rock pixel output file
     char outputPixelPath[1024];
@@ -1071,7 +1081,7 @@ int detect_from_files(char* inputImagePath, char* paramsPath, char* outputRockLi
         return 0;
     }
 
-    write_rocklist_header(fp_out, &rd_parms);
+    write_rocklist_header(fp_out, &rd_parms, NULL);
 
     //intialize rock pixel output file
     char outputPixelPath[1024];
