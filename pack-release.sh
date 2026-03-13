@@ -1,6 +1,10 @@
 #!/bin/bash
 
-ts=`date +%Y%m%d`
+if [[ $# -gt 0 ]]; then
+  ts=$1
+else
+  ts=`date +%Y%m%d`
+fi
 
 dir="ROSCO_${ts}"
 
