@@ -13,5 +13,6 @@ dir="ROSCO_${ts}"
 mkdir $dir
 
 cp -r RockCollect/bin/Release/* $dir
+cp RockDetector/build/bin/Release/RockDetector.exe $dir
 
 zip -rp "${dir}.zip" $dir
