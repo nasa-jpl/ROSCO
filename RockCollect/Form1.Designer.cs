@@ -82,7 +82,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MinimumSize = new System.Drawing.Size(1000, 650);
             this.Name = "Form1";
-            this.Text = "RockCollect";
+            this.Text = "ROSCO";
             this.Load += new System.EventHandler(this.Form1_Load);
             this.ResumeLayout(false);
 
