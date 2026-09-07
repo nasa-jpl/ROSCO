@@ -550,6 +550,9 @@ int detect_tile(char* inputImagePath, unsigned short* labelImg, unsigned char* s
     return 1;
 }
 
+static int eps_eq(float a, float b) {
+    return fabs(a - b) < 0.0001;
+}
 
 int detect_per_tile_settings(char* inputImagePath, char* outputRockListPath, int numSettings, RD_PARMS* settingsArray)
 {
@@ -599,19 +602,21 @@ int detect_per_tile_settings(char* inputImagePath, char* outputRockListPath, int
         params.max_shadow_size =          first->max_shadow_size;
         params.gamma_threshold_override = first->gamma_threshold_override;
 
+        //negative param setting means different per tile
         for (int i = 1; i < numSettings; i++) {
             RD_PARMS* p = &settingsArray[i];
-            if (p->gamma                    != params.gamma)                    params.gamma = -1; //different per tile
-            if (p->sun_incidence_angle      != params.sun_incidence_angle)      params.sun_incidence_angle = -1;
-            if (p->sun_azimuth_angle        != params.sun_azimuth_angle)        params.sun_azimuth_angle = -1;
-            if (p->min_shadow_size          != params.min_shadow_size)          params.min_shadow_size = -1;
-            if (p->ground_resolution        != params.ground_resolution)        params.ground_resolution = -1;
-            if (p->confidence_threshold     != params.confidence_threshold)     params.confidence_threshold = -1;
-            if (p->min_shadow_size_split    != params.min_shadow_size_split)    params.min_shadow_size_split = -1;
-            if (p->spliting_ratio           != params.spliting_ratio)           params.spliting_ratio = -1;
-            if (p->rock_elongate_ratio      != params.rock_elongate_ratio)      params.rock_elongate_ratio = -1;
-            if (p->mean_gradient_threshold  != params.mean_gradient_threshold)  params.mean_gradient_threshold = -1;
-            if (p->max_shadow_size          != params.max_shadow_size)          params.max_shadow_size = -1;
+            if (!eps_eq(p->gamma,                   params.gamma))                  params.gamma = -1;
+            if (!eps_eq(p->sun_incidence_angle,     params.sun_incidence_angle))    params.sun_incidence_angle = -1;
+            if (!eps_eq(p->sun_azimuth_angle,       params.sun_azimuth_angle))      params.sun_azimuth_angle = -1;
+            if (!eps_eq(p->min_shadow_size,         params.min_shadow_size))        params.min_shadow_size = -1;
+            if (!eps_eq(p->ground_resolution,       params.ground_resolution))      params.ground_resolution = -1;
+            if (!eps_eq(p->confidence_threshold,    params.confidence_threshold))   params.confidence_threshold = -1;
+            if (!eps_eq(p->min_shadow_size_split,   params.min_shadow_size_split))  params.min_shadow_size_split = -1;
+            if (!eps_eq(p->spliting_ratio,          params.spliting_ratio))         params.spliting_ratio = -1;
+            if (!eps_eq(p->rock_elongate_ratio,     params.rock_elongate_ratio))    params.rock_elongate_ratio = -1;
+            if (!eps_eq(p->mean_gradient_threshold, params.mean_gradient_threshold))
+                params.mean_gradient_threshold = -1;
+            if (!eps_eq(p->max_shadow_size,         params.max_shadow_size))         params.max_shadow_size = -1;
             if (p->gamma_threshold_override != params.gamma_threshold_override) params.gamma_threshold_override = -1;
         }
     }
