@@ -631,7 +631,20 @@ namespace RockCollect.Stages
                               "saving resulting rocklist to \"{2}\".", nr, numTiles, fileName),
                 "Running Rock Detector", MessageBoxButtons.OKCancel, MessageBoxIcon.Information);
             if (res == DialogResult.Cancel) return;
-            
+
+            float min_gsd = float.PositiveInfinity;
+            float max_gsd = float.NegativeInfinity;
+            foreach (var setting in inSettings) {
+                if (setting.GSD < min_gsd) min_gsd = setting.GSD;
+                if (setting.GSD > max_gsd) max_gsd = setting.GSD;
+            }
+            if (min_gsd != max_gsd) {
+                var result = MessageBox.Show(string.Format("GSD varies across tiles: min={0}, max={1}, run anyway?",
+                                                           min_gsd, max_gsd),
+                                             "Warning", MessageBoxButtons.YesNo, MessageBoxIcon.Warning);
+                if (result == DialogResult.No) return;
+            }
+
             RockDetector.detect_per_tile_settings(ImagePath, fileName, numTiles, inSettings);
             //TODO: warn
 
