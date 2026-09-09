@@ -13,6 +13,9 @@ dir="ROSCO_${ts}"
 mkdir $dir
 
 cp -r RockCollect/bin/Release/* $dir
-cp RockDetector/build/bin/Release/RockDetector.exe $dir
+cp RockDetector/build/bin/Release/RockDetector.exe* $dir
+cp RockCollect/RockListToShapeFileTool/bin/Release/net472/*.dll $dir
+cp RockCollect/RockListToShapeFileTool/bin/Release/net472/RockListToShapeFile.exe* $dir
+cp RockCollect/RockListToShapeFileTool/bin/Release/net472/RockListToShapeFile.exe.config $dir
 
 zip -rp "${dir}.zip" $dir

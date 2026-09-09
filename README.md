@@ -52,7 +52,7 @@ Install the latest version of cmake from [here](https://cmake.org/download).  Th
 
 Install [Microsoft Visual Studio Community Edition](https://visualstudio.microsoft.com/vs/community).  These instructions were tested with
 
-* [Visual Studio 16 2019](https://visualstudio.microsoft.com/vs/older-downloads), which is also the version currently used by the [RockCollect](#rockcollect-user-interface) UI.
+* [Visual Studio 17 2022](https://aka.ms/vs/17/release/vs_community.exe), which is also the version currently used by the [RockCollect](#rockcollect-user-interface) UI.
 * a [git bash](https://www.atlassian.com/git/tutorials/git-bash) command prompt, but the built-in cmd or [cygwin](https://cygwin.com) should also work.
 
 Then run the following commands to generate the Visual Studio solution file:
@@ -61,7 +61,7 @@ Then run the following commands to generate the Visual Studio solution file:
   cd RockDetector
   mkdir build
   cd build
-  cmake .. -G "Visual Studio 16 2019"
+  cmake .. -G "Visual Studio 17 2022"
 ``` 
 
 Then open the newly created `RockDetector/build/Rockdetector.sln` in Visual Studio.  In the "Solution Configurations" pulldown in the toolbar make sure "Release" is chosen.  In the adjacent "Solution Platforms" pulldown make sure "x64" is chosen.  Then in the Solution Explorer pane right click on "Solution 'RockDetector'" and chose "Build Solution".  The command line executable will be generated at `RockDetector/build/bin/Release/RockDetector.exe` and the shared library will be at `RockDetector/build/Release/RockDetectorShared.dll`.
@@ -79,11 +79,11 @@ RockCollect is built using [Windows Forms](https://en.wikipedia.org/wiki/Windows
 
 # Building RockCollect (Windows Only)
 
-Install Microsoft [Visual Studio Community Edition 16 2019](https://visualstudio.microsoft.com/vs/older-downloads).
+Install Microsoft [Visual Studio Community Edition 17 2022](https://visualstudio.microsoft.com/vs/older-downloads).
 
-First build [RockDetector](#rockdetector-command-line-tool-and-library), following the instructions above, using Visual Studio 16 2019.
+First build [RockDetector](#rockdetector-command-line-tool-and-library), following the instructions above, using Visual Studio 17 2022.
 
-Then open `RockCollect/Source/RockCollect.sln` in Visual Studio 16 2019.  In the "Solution Configurations" pulldown in the toolbar make sure "Release" is chosen.  In the adjacent "Solution Platforms" pulldown make sure "x64" is chosen.  In the Solution Explorer pane right click on "Solution 'RockCollect'" and chose "Build Solution".
+Then open `RockCollect/Source/RockCollect.sln` in Visual Studio 17 2022.  In the "Solution Configurations" pulldown in the toolbar make sure "Release" is chosen.  In the adjacent "Solution Platforms" pulldown make sure "x64" is chosen.  In the Solution Explorer pane right click on "Solution 'RockCollect'" and chose "Build Solution".
 
 Open a command prompt and then run the following commands to copy the RockDetector shared library and then launch the RockCollect UI:
 ```
@@ -91,6 +91,16 @@ cd ROSCO
 cp ./RockDetector/build/Release/RockDetectorShared.dll ./RockCollect/bin/Release/
 ./RockCollect/bin/Release/RockCollect.exe
 ```
+
+## RockListToShapeFile
+
+RockListToShapeFile is a command line tool to generate an [ESRI shapefile](https://doc.arcgis.com/en/arcgis-online/reference/shapefiles.htm) from a rocklist text file output from RockDetect or RockCollect.  `RockListToShapeFile.exe` is built automatically whenever the [RockCollect](#rockcollect-user-interface) UI is built.  To run it open a command prompt and run
+
+```
+./RockCollect/RockListToShapeFileTool/bin/Release/net472/RockListToShapeFile.exe rocklist.txt
+```
+
+That will generate `rocklist.shp`, `rocklist.shx`, `rocklist.dbf` and `rocklist.cpg` as siblings of the input rock list text file.  If `rocklist.shp` already exists the program will abort without overwriting any of the output files.  If you want to overwrite them, remove `rocklist.shp` manually first.
 
 ## References
 
