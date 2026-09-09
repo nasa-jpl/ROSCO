@@ -591,7 +591,7 @@ int detect_per_tile_settings(char* inputImagePath, char* outputRockListPath, int
 
         //go to first runnable tile (max_shadow_size > 0)
         int i = 0;
-        for (i < numSettings; i++) {
+        for (; i < numSettings; i++) {
             if (settingsArray[i].max_shadow_size > 0) break;
         }
 
