@@ -588,7 +588,17 @@ int detect_per_tile_settings(char* inputImagePath, char* outputRockListPath, int
     params.gamma_threshold_override = -1;
 
     if (numSettings > 0) {
-        RD_PARMS* first = &settingsArray[0];
+
+        //go to first runnable tile (max_shadow_size > 0)
+        int i = 0;
+        for (i < numSettings; i++) {
+            if (settingsArray[i].max_shadow_size > 0) break;
+        }
+
+        if (i == numSettings) return 0; //no runnable tiles
+
+        //default to the settings of the first runnable tile for the overall tile list
+        RD_PARMS* first = &settingsArray[i];
         params.gamma =                    first->gamma; 
         params.sun_incidence_angle =      first->sun_incidence_angle;
         params.sun_azimuth_angle =        first->sun_azimuth_angle;
@@ -602,9 +612,11 @@ int detect_per_tile_settings(char* inputImagePath, char* outputRockListPath, int
         params.max_shadow_size =          first->max_shadow_size;
         params.gamma_threshold_override = first->gamma_threshold_override;
 
-        //negative param setting means different per tile
-        for (int i = 1; i < numSettings; i++) {
+        //now check the remaining runnable tiles, if any has a parameter that disagrees with the first runnable tile
+        //then set that to -1 which means it varies across tiles
+        for (; i < numSettings; i++) {
             RD_PARMS* p = &settingsArray[i];
+            if (p->max_shadow_size <= 0) continue; //this tile is not runnable
             if (!eps_eq(p->gamma,                   params.gamma))                  params.gamma = -1;
             if (!eps_eq(p->sun_incidence_angle,     params.sun_incidence_angle))    params.sun_incidence_angle = -1;
             if (!eps_eq(p->sun_azimuth_angle,       params.sun_azimuth_angle))      params.sun_azimuth_angle = -1;
