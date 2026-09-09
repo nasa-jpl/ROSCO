@@ -45,8 +45,8 @@ namespace RockCollect
 
         [DllImport("kernel32", CharSet = CharSet.Auto, SetLastError = true)]
         static extern bool SetDefaultDllDirectories(uint directoryFlags);
-        //               LOAD_LIBRARY_SEARCH_USER_DIRS | LOAD_LIBRARY_SEARCH_SYSTEM32
-        private const uint DllSearchFlags = 0x00000400 | 0x00000800;
+        //               LOAD_LIBRARY_SEARCH_DEFAULT_DIRS
+        private const uint DllSearchFlags = 0x00001000;
 
         [DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)]
         [return: MarshalAs(UnmanagedType.Bool)]
@@ -68,8 +68,7 @@ namespace RockCollect
                     return;
                 }
 
-                string executingAssemblyFile = new Uri(Assembly.GetExecutingAssembly().GetName().CodeBase).LocalPath;
-                executingDirectory = Path.GetDirectoryName(executingAssemblyFile);
+                executingDirectory = AppContext.BaseDirectory;
 
                 if (string.IsNullOrEmpty(executingDirectory))
                     throw new InvalidOperationException("cannot get executing directory");
@@ -105,6 +104,10 @@ namespace RockCollect
                 string projSharePath = Path.Combine(gdalPath, "share");
                 Environment.SetEnvironmentVariable("PROJ_LIB", projSharePath);
                 Gdal.SetConfigOption("PROJ_LIB", projSharePath);
+                OSGeo.OSR.Osr.SetPROJSearchPaths(new[] { projSharePath });
+				
+				string certificateFile = Path.Combine(gdalPath, "curl-ca-bundle.crt");
+                Gdal.SetConfigOption("GDAL_CURL_CA_BUNDLE", certificateFile);
 
                 _usable = true;
             }
@@ -141,7 +144,7 @@ namespace RockCollect
             Ogr.RegisterAll();
             _configuredOgr = true;
 
-            //PrintDriversOgr();
+            PrintDriversOgr();
         }
 
         /// <summary>
@@ -157,7 +160,7 @@ namespace RockCollect
             Gdal.AllRegister();
             _configuredGdal = true;
 
-            //PrintDriversGdal();
+            PrintDriversGdal();
         }
 
 
